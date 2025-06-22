@@ -75,7 +75,7 @@ class LocalJsonDB:
                 if (not os.path.exists(img_path)) or (not img_path):
                     img_path = None
 
-                # Create Question object
+                # Create the Question object
                 question = Question(
                     qid=q_data["qid"],
                     question=q_data["question"],
