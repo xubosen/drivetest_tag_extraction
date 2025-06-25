@@ -96,6 +96,16 @@ class Question:
         """
         return self._img_path
 
+    def set_img_path(self, img_path: str | None):
+        """
+        Set the path to the image associated with the question.
+
+        :param img_path: The new image path as a string, or None if no image is associated
+        """
+        if img_path is not None and not isinstance(img_path, str):
+            raise IncorrectFormatError("Image path must be a string or None.")
+        self._img_path = img_path
+
 class IncorrectFormatError(TypeError):
     """ Error class for incorrect question format. """
 
