@@ -101,12 +101,52 @@ class TestFillImg:
 
     def test_fill_smaller_image(self):
         """Test filling a smaller image with white pixels."""
-        pass
+        # Create a reshaper with target size (400, 300)
+        reshaper = ImgReshaper((400, 300))
+
+        # Create a smaller test image (200, 150) with a colored rectangle
+        img = Image.new('RGB', (200, 150), (0, 0, 0))  # Black image
+
+        # Fill the image to match target size
+        filled_img = reshaper._fill_img(img)
+
+        # Verify the result has the correct size
+        assert filled_img.size == (400, 300)
+
+        # Verify the image is centered - check corner pixels are white
+        assert filled_img.getpixel((0, 0)) == (255, 255, 255)  # Top-left
+        assert filled_img.getpixel((399, 0)) == (255, 255, 255)  # Top-right
+        assert filled_img.getpixel((0, 299)) == (255, 255, 255)  # Bottom-left
+        assert filled_img.getpixel((399, 299)) == (255, 255, 255)  # Bottom-right
+
+        # Calculate where the original image should be placed
+        paste_x = (400 - 200) // 2  # = 100
+        paste_y = (300 - 150) // 2  # = 75
+
+        # Verify center of pasted image is black
+        assert filled_img.getpixel((paste_x + 100, paste_y + 75)) == (0, 0, 0)  # Center
 
     def test_fill_exact_size_image(self):
         """Test filling an image that already matches target size."""
-        pass
+        # Create a reshaper with target size (400, 300)
+        reshaper = ImgReshaper((400, 300))
 
+        # Create an image with exact target size
+        original_img = Image.new('RGB', (400, 300), (100, 150, 200))  # Blue-ish image
+
+        # Fill the image
+        filled_img = reshaper._fill_img(original_img)
+
+        # Verify the image is returned unchanged (same size)
+        assert filled_img.size == (400, 300)
+
+        # Check a few pixels to make sure content is preserved
+        assert filled_img.getpixel((0, 0)) == (100, 150, 200)
+        assert filled_img.getpixel((399, 299)) == (100, 150, 200)
+
+        # For exact-sized images, the original image should be returned directly
+        # We can verify this by checking if the images have the same content
+        assert filled_img.tobytes() == original_img.tobytes()
 
 class TestIsLarger:
     """Tests for the _is_larger method."""
