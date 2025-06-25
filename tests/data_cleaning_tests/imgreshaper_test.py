@@ -37,7 +37,7 @@ class TestImgReshaperInit:
         pass
 
 
-class TestReshapeMethod:
+class TestReshape:
     """Tests for the reshape method."""
 
     def test_reshape_larger_image(self, setup_test_dirs):
@@ -57,7 +57,7 @@ class TestReshapeMethod:
         pass
 
 
-class TestFetchImgMethod:
+class TestFetchImg:
     """Tests for the _fetch_img method."""
 
     def test_fetch_existing_image(self, setup_test_dirs):
@@ -65,7 +65,7 @@ class TestFetchImgMethod:
         pass
 
 
-class TestSaveImgMethod:
+class TestSaveImg:
     """Tests for the _save_img method."""
 
     def test_save_rgb_image(self, setup_test_dirs):
@@ -77,7 +77,7 @@ class TestSaveImgMethod:
         pass
 
 
-class TestDownscaleImgMethod:
+class TestDownscaleImg:
     """Tests for the _downscale_img method."""
 
     def test_downscale_larger_width_height(self):
@@ -96,7 +96,7 @@ class TestDownscaleImgMethod:
         """Test that downscaling maintains the aspect ratio."""
         pass
 
-class TestFillImgMethod:
+class TestFillImg:
     """Tests for the _fill_img method."""
 
     def test_fill_smaller_image(self):
@@ -108,25 +108,60 @@ class TestFillImgMethod:
         pass
 
 
-class TestIsLargerMethod:
+class TestIsLarger:
     """Tests for the _is_larger method."""
 
     def test_larger_width_height(self):
         """Test detection of image larger in both dimensions."""
-        pass
+        # Create a reshaper with target size (400, 300)
+        reshaper = ImgReshaper((400, 300))
+
+        # Create an image larger in both dimensions (500, 400)
+        img = Image.new('RGB', (500, 400))
+
+        # Test the _is_larger method
+        assert reshaper._is_larger(img) is True
 
     def test_larger_width_only(self):
         """Test detection of image larger in width only."""
-        pass
+        # Create a reshaper with target size (400, 300)
+        reshaper = ImgReshaper((400, 300))
+
+        # Create an image larger in width only (500, 200)
+        img = Image.new('RGB', (500, 200))
+
+        # Test the _is_larger method
+        assert reshaper._is_larger(img) is True
 
     def test_larger_height_only(self):
         """Test detection of image larger in height only."""
-        pass
+        # Create a reshaper with target size (400, 300)
+        reshaper = ImgReshaper((400, 300))
+
+        # Create an image larger in height only (300, 400)
+        img = Image.new('RGB', (300, 400))
+
+        # Test the _is_larger method
+        assert reshaper._is_larger(img) is True
 
     def test_smaller_image(self):
         """Test detection of image smaller in both dimensions."""
-        pass
+        # Create a reshaper with target size (400, 300)
+        reshaper = ImgReshaper((400, 300))
+
+        # Create an image smaller in both dimensions (300, 200)
+        img = Image.new('RGB', (300, 200))
+
+        # Test the _is_larger method
+        assert reshaper._is_larger(img) is False
 
     def test_exact_size_image(self):
         """Test detection of image with exact target size."""
-        pass
+        # Create a reshaper with target size (400, 300)
+        reshaper = ImgReshaper((400, 300))
+
+        # Create an image with exact target size (400, 300)
+        img = Image.new('RGB', (400, 300))
+
+        # Test the _is_larger method
+        assert reshaper._is_larger(img) is False
