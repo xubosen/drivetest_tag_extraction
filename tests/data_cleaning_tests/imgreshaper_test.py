@@ -211,7 +211,7 @@ class TestFetchImg:
         assert isinstance(fetched_img, Image.Image)
         # Verify the fetched image matches the target image
         assert fetched_img.size == target_img.size
-        assert fetched_img == target_img
+        assert fetched_img.tobytes() == target_img.tobytes()
 
 
 class TestSaveImg:

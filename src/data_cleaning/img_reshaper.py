@@ -67,7 +67,11 @@ class ImgReshaper:
         - image is a valid image file with the "WebP" format
         """
         img_path = os.path.join(cur_dir, f"{img_name}.webp")
-        return Image.open(img_path)
+        with open(img_path , 'rb') as img_file:
+            img = Image.open(img_file)
+            img.load()
+        return img
+
 
     def _save_img(self, img: Image, new_dir: str, img_name: str) -> None:
         """
