@@ -7,7 +7,10 @@ import logging
 from logging import Logger
 import os
 from datetime import datetime
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+import torch
+from transformers.models.siglip2.modeling_siglip2 import Siglip2Model
+from transformers.models.siglip2.processing_siglip2 import Siglip2Processor
 
 # Local Imports
 from qb.question_bank import QuestionBank
@@ -59,9 +62,26 @@ def _get_qb() -> QuestionBank:
     db = LocalJsonDB(FILE_PATH, IMG_DIR)
     return db.load()
 
-def _make_fake_model() -> Mock:
+def _make_fake_model() -> tuple[Mock, Mock]:
     """ Return a mock model for testing. """
-    pass
+    model_mock = Mock(spec=Siglip2Model)
+    processor_mock = Mock(spec=Siglip2Processor)
+
+    # Configure processor mock to return a dictionary when called
+    processor_mock.return_value = {
+        "input_ids": torch.ones((1, 10), dtype=torch.long),
+        "attention_mask": torch.ones((1, 10), dtype=torch.long),
+        "pixel_values": torch.ones((1, 3, 224, 224), dtype=torch.float)
+    }
+
+    # Configure model mock to return an object with text_embeds and image_embeds attributes
+    output_mock = Mock()
+    output_mock.text_embeds = torch.ones((1, 768), dtype=torch.float)
+    output_mock.image_embeds = torch.ones((1, 768), dtype=torch.float)
+    output_mock.text = torch.ones((1, 768), dtype=torch.float)
+    model_mock.return_value = output_mock
+
+    return model_mock, processor_mock
 
 # ========= Tests =========
 class TestHelperFunctions:
@@ -145,19 +165,30 @@ class TestQBEmbedderInitialization:
 
     def test_init_with_valid_parameters(self):
         """Test QBEmbedder initialization with a model and logger."""
-        pass
+        # Create mock objects
+        mock_model, mock_processor = _make_fake_model()
+        mock_logger = Mock(spec=Logger)
 
-    def test_init_stores_model_and_logger(self):
-        """Test that model and logger are correctly stored in instance variables."""
-        pass
+        # Initialize the embedder
+        embedder = Siglip2QBEmbedder(
+            model=mock_model,
+            processor=mock_processor,
+            logger=mock_logger
+        )
+
+        # Assert instance variables are correctly set
+        assert embedder._model is mock_model
+        assert embedder._processor is mock_processor
+        assert embedder._logger is mock_logger
+
+        # Verify no methods were called during initialization
+        mock_model.assert_not_called()
+        mock_processor.assert_not_called()
+        mock_logger.assert_not_called()
 
 
 class TestEncodeQB:
     """Tests for the encode_qb method."""
-
-    def test_encode_qb_empty_bank(self):
-        """Test encoding an empty question bank."""
-        pass
 
     def test_encode_qb_single_chapter_no_images(self):
         """Test encoding a question bank with a single chapter and no images."""
@@ -202,6 +233,48 @@ class TestEncodeTextAndImage:
 
 class TestEncodeText:
     """Tests for the _encode_text method."""
+
+    def test_encode_text_returns_tensor(self):
+        """Test that _encode_text returns a tensor with correct shape."""
+        # Create mock objects but use a real logger
+        mock_model, mock_processor = _make_fake_model()
+        real_logger = _make_logger()
+
+        # Set expected output shape
+        expected_shape = (1, 768)
+        expected_output = torch.ones(expected_shape, dtype=torch.float)
+        mock_model.return_value.text = expected_output
+
+        # Create embedder with mocks
+        embedder = Siglip2QBEmbedder(
+            model=mock_model,
+            processor=mock_processor,
+            logger=real_logger
+        )
+
+        # Test document
+        test_doc = "This is a test question"
+
+        # Call the method
+        result = embedder._encode_text(test_doc)
+
+        # Verify the processor was called with correct parameters
+        mock_processor.assert_called_once()
+        call_args, call_kwargs = mock_processor.call_args
+        assert call_kwargs["text"] == test_doc
+        assert call_kwargs["images"] is None
+        assert call_kwargs["return_tensors"] == "pt"
+        assert call_kwargs["padding"] is True
+
+        # Verify the model was called with the processor's output
+        mock_model.assert_called_once()
+
+        # Verify the result is the expected tensor
+        assert torch.is_tensor(result)
+        assert result.shape == expected_shape
+        assert torch.equal(result, expected_output)
+
+        real_logger.info("Encode text test completed successfully")
 
 
 class TestIntegration:
