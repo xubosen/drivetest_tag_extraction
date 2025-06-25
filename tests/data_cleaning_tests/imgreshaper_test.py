@@ -18,16 +18,18 @@ VALID_IMG_NAMES = ["331x653",
                    "900x450",
                    "900x900"]
 
-# Test fixtures
-@pytest.fixture
-def setup_test_dirs():
+
+def _load_image(img_path) -> Image:
     """
-    Setup test directories and ensure they exist.
+    Helper function to load a saved image.
+
+    :param img_path: Path to the saved image
+    :return: PIL Image object of the loaded image
     """
-    os.makedirs(TEST_IMG_DIR, exist_ok=True)
-    os.makedirs(TEST_NEW_IMG_DIR, exist_ok=True)
-    yield
-    # Any cleanup if needed
+    try:
+        return Image.open(img_path)
+    except Exception as e:
+        pytest.fail(f"Failed to load saved image at {img_path}: {e}")
 
 class TestImgReshaperInit:
     """Tests for the ImgReshaper constructor."""
@@ -40,19 +42,19 @@ class TestImgReshaperInit:
 class TestReshape:
     """Tests for the reshape method."""
 
-    def test_reshape_larger_image(self, setup_test_dirs):
+    def test_reshape_larger_image(self):
         """Test reshaping an image larger than target size."""
         pass
 
-    def test_reshape_smaller_image(self, setup_test_dirs):
+    def test_reshape_smaller_image(self):
         """Test reshaping an image smaller than target size."""
         pass
 
-    def test_reshape_exact_size_image(self, setup_test_dirs):
+    def test_reshape_exact_size_image(self):
         """Test reshaping an image with exact target size."""
         pass
 
-    def test_reshape_different_aspect_ratio(self, setup_test_dirs):
+    def test_reshape_different_aspect_ratio(self):
         """Test reshaping an image with different aspect ratio."""
         pass
 
@@ -60,7 +62,7 @@ class TestReshape:
 class TestFetchImg:
     """Tests for the _fetch_img method."""
 
-    def test_fetch_existing_image(self, setup_test_dirs):
+    def test_fetch_existing_image(self):
         """Test fetching an existing image."""
         pass
 
@@ -68,13 +70,75 @@ class TestFetchImg:
 class TestSaveImg:
     """Tests for the _save_img method."""
 
-    def test_save_rgb_image(self, setup_test_dirs):
+    def test_save_rgb_image(self):
         """Test saving an RGB image."""
-        pass
+        # Create directories if they don't exist
+        os.makedirs(TEST_NEW_IMG_DIR, exist_ok=True)
 
-    def test_save_rgba_image(self, setup_test_dirs):
+        # Create a reshaper
+        reshaper = ImgReshaper((400, 300))
+
+        # Create a test RGB image
+        test_img = Image.new('RGB', (400, 300), color=(255, 0, 0))  # Red image
+
+        # Generate a unique image name
+        img_name = "test_rgb_image"
+        img_path = os.path.join(TEST_NEW_IMG_DIR, f"{img_name}.jpg")
+
+        # Save the image
+        reshaper._save_img(test_img, TEST_NEW_IMG_DIR, img_name)
+
+        # Verify the image was saved
+        assert os.path.exists(img_path)
+
+        # Load the saved image and verify its properties
+        saved_img = _load_image(img_path)
+
+        assert saved_img.mode == 'RGB'
+        assert saved_img.size == (400, 300)
+
+        # Verify image content (sample a pixel to ensure it's still red)
+        # Note: Some slight color variation may occur due to JPEG compression
+        red_value = saved_img.getpixel((200, 150))[0]
+        assert red_value > 250  # Should still be very red
+
+        # Clean up the test file
+        os.remove(img_path)
+
+    def test_save_rgba_image(self):
         """Test saving an RGBA image (should convert to RGB)."""
-        pass
+        # Create directories if they don't exist
+        os.makedirs(TEST_NEW_IMG_DIR, exist_ok=True)
+
+        # Create a reshaper
+        reshaper = ImgReshaper((400, 300))
+
+        # Create a test RGBA image with transparency
+        test_img = Image.new('RGBA', (400, 300), color=(0, 255, 0, 128))  # Semi-transparent green
+
+        # Generate a unique image name
+        img_name = "test_rgba_image"
+        img_path = os.path.join(TEST_NEW_IMG_DIR, f"{img_name}.jpg")
+
+        # Save the image
+        reshaper._save_img(test_img, TEST_NEW_IMG_DIR, img_name)
+
+        # Verify the image was saved
+        assert os.path.exists(img_path)
+
+        # Load the saved image and verify its properties
+        saved_img = _load_image(img_path)
+
+        # Verify the image was converted to RGB (no alpha channel)
+        assert saved_img.mode == 'RGB'
+        assert saved_img.size == (400, 300)
+
+        # Verify image content (should have preserved the green component)
+        green_value = saved_img.getpixel((200, 150))[1]
+        assert green_value > 250  # Should still be very green
+
+        # Clean up the test file
+        os.remove(img_path)
 
 
 class TestDownscaleImg:
