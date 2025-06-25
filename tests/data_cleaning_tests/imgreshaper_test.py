@@ -82,19 +82,63 @@ class TestDownscaleImg:
 
     def test_downscale_larger_width_height(self):
         """Test downscaling an image larger in both dimensions."""
-        pass
+        # Create a reshaper with target size (400, 300)
+        reshaper = ImgReshaper((400, 300))
+
+        # Create a test image that is larger in both dimensions (800, 600)
+        test_img = Image.new('RGB', (800, 600), color=(100, 100, 100))
+
+        # Downscale the image
+        result = reshaper._downscale_img(test_img)
+
+        # Verify the result fits within target dimensions
+        assert result.width <= 400
+        assert result.height <= 300
+
+        # Verify aspect ratio is maintained (should be 400x300)
+        assert result.width == 400
+        assert result.height == 300
 
     def test_downscale_larger_width_only(self):
         """Test downscaling an image larger in width only."""
-        pass
+        # Create a reshaper with target size (400, 300)
+        reshaper = ImgReshaper((400, 300))
+
+        # Create a test image larger in width only (800, 200)
+        test_img = Image.new('RGB', (800, 200), color=(100, 100, 100))
+
+        # Downscale the image
+        result = reshaper._downscale_img(test_img)
+
+        # Verify the width is reduced to fit within target size
+        assert result.width <= 400
+
+        # Verify aspect ratio is maintained
+        # Original aspect ratio: 800/200 = 4
+        # New width should be 400, so height should be 400/4 = 100
+        assert result.width == 400
+        assert result.height == 100
 
     def test_downscale_larger_height_only(self):
         """Test downscaling an image larger in height only."""
-        pass
+        # Create a reshaper with target size (400, 300)
+        reshaper = ImgReshaper((400, 300))
 
-    def test_downscale_maintains_aspect_ratio(self):
-        """Test that downscaling maintains the aspect ratio."""
-        pass
+        # Create a test image larger in height only (300, 600)
+        test_img = Image.new('RGB', (300, 600), color=(100, 100, 100))
+
+        # Downscale the image
+        result = reshaper._downscale_img(test_img)
+
+        # Verify the height is reduced to fit within target size
+        assert result.height <= 300
+
+        # Verify aspect ratio is maintained
+        # Original aspect ratio: 300/600 = 0.5
+        # New height should be 300, so width should be 300*0.5 = 150
+        assert result.width == 150
+        assert result.height == 300
+
 
 class TestFillImg:
     """Tests for the _fill_img method."""
