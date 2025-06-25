@@ -15,7 +15,7 @@ from transformers.models.siglip2.processing_siglip2 import Siglip2Processor
 # Local Imports
 from qb.question_bank import QuestionBank
 from qb.question import Question
-from embedder.siglip2_qb_embedder import Siglip2QBEmbedder, _has_image, _format_question
+from embedder.siglip2_qb_embedder import Siglip2QBEmbedder, _has_image, format_question
 from data_storage.database.json_database import LocalJsonDB
 
 # Constants for testing
@@ -127,7 +127,7 @@ class TestHelperFunctions:
         expected = "章节: Geography\n题目: What is the capital of Canada?\n答案: Ottawa"
 
         # Test the function
-        result = _format_question(question, chapter)
+        result = format_question(question, chapter)
 
         # Assert
         assert result == expected
@@ -152,7 +152,7 @@ class TestHelperFunctions:
         )
 
         # Test the function
-        result = _format_question(question, chapter)
+        result = format_question(question, chapter)
 
         # Assert
         assert result == expected

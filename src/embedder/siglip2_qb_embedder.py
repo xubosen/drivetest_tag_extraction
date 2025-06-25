@@ -11,19 +11,18 @@ from qb.question import Question
 from qb.question_bank import QuestionBank
 
 
+def format_question(q: Question, chapter: str) -> str:
+    """
+    Format the question into a string suitable for encoding.
+    """
+    text = f"章节:{chapter}题目:{q.get_question()}答案:{q.get_correct_answer()}"
+    return text
+
 def _has_image(q: Question) -> bool:
     """
     Check if the question contains an image.
     """
     return q.get_img_path() is not None
-
-
-def _format_question(q: Question, chapter: str) -> str:
-    """
-    Format the question into a string suitable for encoding.
-    """
-    return f"章节: {chapter}\n题目: {q.get_question()}\n" \
-           f"答案: {q.get_correct_answer()}"
 
 
 class Siglip2QBEmbedder:
@@ -51,9 +50,10 @@ class Siglip2QBEmbedder:
         self._logger = logger
         # Pre-create dummy image to avoid repeated creation
         self._dummy_image = self._create_dummy_image()
+
         # Set max length based on model's position embeddings limit
-        # Using 60 to leave some buffer for special tokens
-        self._max_length = 60
+        # Using 62 to leave some buffer for special tokens
+        self._max_length = 62
 
     def encode_qb(self, qb: QuestionBank) -> Dict[str, np.ndarray]:
         """
@@ -83,7 +83,7 @@ class Siglip2QBEmbedder:
         Encode a question into a vector space.
         """
         self._logger.info(f"Encoding Question {q.get_qid()}")
-        doc = _format_question(q, chapter)
+        doc = format_question(q, chapter)
         if _has_image(q):
             image_path = q.get_img_path()
             tensor_embedding = self._encode_text_and_img(doc, image_path)
