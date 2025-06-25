@@ -64,7 +64,19 @@ class TestFetchImg:
 
     def test_fetch_existing_image(self):
         """Test fetching an existing image."""
-        pass
+        # Create a reshaper
+        reshaper = ImgReshaper((400, 300))
+
+        # Load a valid image from the test directory
+        img_name = VALID_IMG_NAMES[0]
+        img_path = os.path.join(TEST_IMG_DIR, f"{img_name}.webp")
+        target_img = _load_image(img_path)
+        fetched_img = reshaper._fetch_img(img_name, TEST_IMG_DIR)
+        # Verify the fetched image is a PIL Image object
+        assert isinstance(fetched_img, Image.Image)
+        # Verify the fetched image matches the target image
+        assert fetched_img.size == target_img.size
+        assert fetched_img == target_img
 
 
 class TestSaveImg:
