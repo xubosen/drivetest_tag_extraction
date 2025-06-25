@@ -1,6 +1,6 @@
 from typing import Dict, Set, List
 
-from qb.question import Question
+from src.qb.question import Question
 
 class QuestionBank:
     """
