@@ -12,7 +12,7 @@ from unittest.mock import Mock
 # Local Imports
 from qb.question_bank import QuestionBank
 from qb.question import Question
-from embedder.qb_embedder import QBEmbedder, _has_image, _format_question
+from embedder.siglip2_qb_embedder import Siglip2QBEmbedder, _has_image, _format_question
 from data_storage.database.json_database import LocalJsonDB
 
 # Constants for testing
@@ -59,6 +59,9 @@ def _get_qb() -> QuestionBank:
     db = LocalJsonDB(FILE_PATH, IMG_DIR)
     return db.load()
 
+def _make_fake_model() -> Mock:
+    """ Return a mock model for testing. """
+    pass
 
 # ========= Tests =========
 class TestHelperFunctions:
@@ -141,7 +144,7 @@ class TestQBEmbedderInitialization:
     """Tests for QBEmbedder initialization."""
 
     def test_init_with_valid_parameters(self):
-        """Test QBEmbedder initialization with valid model and logger."""
+        """Test QBEmbedder initialization with a model and logger."""
         pass
 
     def test_init_stores_model_and_logger(self):
@@ -177,14 +180,6 @@ class TestEncodeQB:
         pass
 
 
-class TestMakeArray:
-    """Tests for the _make_array method."""
-
-    def test_make_array_correct_dimensions(self):
-        """Test that _make_array creates an array with the correct dimensions."""
-        pass
-
-
 class TestEncodeQuestion:
     """Tests for the _encode_question method."""
 
@@ -207,10 +202,6 @@ class TestEncodeTextAndImage:
 
 class TestEncodeText:
     """Tests for the _encode_text method."""
-
-
-class TestEncodeImage:
-    """Tests for the _encode_image method."""
 
 
 class TestIntegration:
