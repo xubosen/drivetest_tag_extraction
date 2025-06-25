@@ -23,7 +23,7 @@ class ImgReshaper:
         """
         self._size = target_size
 
-    def reshape(self, img_name: str, cur_dir: str, new_dir: str) -> None:
+    def reshape(self, img_name: str, cur_dir: str, new_dir: str) -> str:
         """
         Fetch the image from the current directory, reshape it to the target
         size, and save it in the new directory.
@@ -36,6 +36,8 @@ class ImgReshaper:
 
         Save the reshaped image under the new image directory as a JPG file.
 
+        :return: The path to the reshaped image file
+
         ===== Representation Invariant =====
         - image exists at `cur_dir` with the name `img_name`
         - image is a valid image file with the "WebP" format
@@ -47,7 +49,9 @@ class ImgReshaper:
         # Fill with white pixels to match target size
         img = self._fill_img(img)
         # Save the reshaped image
+        save_path = os.path.join(new_dir, f"{img_name}.jpg")
         self._save_img(img, new_dir, img_name)
+        return save_path
 
     def _fetch_img(self, img_name: str, cur_dir: str) -> Image:
         """

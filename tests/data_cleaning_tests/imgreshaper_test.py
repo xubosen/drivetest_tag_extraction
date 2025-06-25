@@ -55,10 +55,13 @@ class TestReshape:
         img_name = "900x900"
 
         # Reshape the image
-        reshaper.reshape(img_name, TEST_IMG_DIR, TEST_NEW_IMG_DIR)
+        output_path = reshaper.reshape(img_name, TEST_IMG_DIR, TEST_NEW_IMG_DIR)
+
+        # Verify the returned path is correct
+        expected_path = os.path.join(TEST_NEW_IMG_DIR, f"{img_name}.jpg")
+        assert output_path == expected_path
 
         # Verify the output file exists
-        output_path = os.path.join(TEST_NEW_IMG_DIR, f"{img_name}.jpg")
         assert os.path.exists(output_path)
 
         # Load the output image and verify its properties
@@ -83,10 +86,13 @@ class TestReshape:
         img_name = "331x653"
 
         # Reshape the image
-        reshaper.reshape(img_name, TEST_IMG_DIR, TEST_NEW_IMG_DIR)
+        output_path = reshaper.reshape(img_name, TEST_IMG_DIR, TEST_NEW_IMG_DIR)
+
+        # Verify the returned path is correct
+        expected_path = os.path.join(TEST_NEW_IMG_DIR, f"{img_name}.jpg")
+        assert output_path == expected_path
 
         # Verify the output file exists
-        output_path = os.path.join(TEST_NEW_IMG_DIR, f"{img_name}.jpg")
         assert os.path.exists(output_path)
 
         # Load the output image and verify its properties
@@ -118,10 +124,13 @@ class TestReshape:
         img_name = "500x250"
 
         # Reshape the image
-        reshaper.reshape(img_name, TEST_IMG_DIR, TEST_NEW_IMG_DIR)
+        output_path = reshaper.reshape(img_name, TEST_IMG_DIR, TEST_NEW_IMG_DIR)
+
+        # Verify the returned path is correct
+        expected_path = os.path.join(TEST_NEW_IMG_DIR, f"{img_name}.jpg")
+        assert output_path == expected_path
 
         # Verify the output file exists
-        output_path = os.path.join(TEST_NEW_IMG_DIR, f"{img_name}.jpg")
         assert os.path.exists(output_path)
 
         # Load the output image and verify its properties
@@ -154,10 +163,13 @@ class TestReshape:
         img_name = "900x450"  # This has a 2:1 aspect ratio
 
         # Reshape the image
-        reshaper.reshape(img_name, TEST_IMG_DIR, TEST_NEW_IMG_DIR)
+        output_path = reshaper.reshape(img_name, TEST_IMG_DIR, TEST_NEW_IMG_DIR)
+
+        # Verify the returned path is correct
+        expected_path = os.path.join(TEST_NEW_IMG_DIR, f"{img_name}.jpg")
+        assert output_path == expected_path
 
         # Verify the output file exists
-        output_path = os.path.join(TEST_NEW_IMG_DIR, f"{img_name}.jpg")
         assert os.path.exists(output_path)
 
         # Load the output image and verify its properties
