@@ -36,7 +36,8 @@ class TestImgReshaperInit:
 
     def test_valid_initialization(self):
         """Test that ImgReshaper initializes correctly with valid parameters."""
-        pass
+        reshaper = ImgReshaper((400, 300))
+        assert reshaper._size == (400, 300)
 
 
 class TestReshape:
