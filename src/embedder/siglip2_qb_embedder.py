@@ -11,11 +11,15 @@ from qb.question import Question
 from qb.question_bank import QuestionBank
 
 
-def format_question(q: Question, chapter: str) -> str:
+def format_question(q: Question, chapter: str,
+                    include_chapter: bool = False) -> str:
     """
     Format the question into a string suitable for encoding.
     """
-    text = f"章节:{chapter}题目:{q.get_question()}答案:{q.get_correct_answer()}"
+    if include_chapter:
+        text = f"章节:{chapter}题目:{q.get_question()}答案:{q.get_correct_answer()}"
+    else:
+        text = f"题目:{q.get_question()}答案:{q.get_correct_answer()}"
     return text
 
 def _has_image(q: Question) -> bool:
@@ -23,6 +27,13 @@ def _has_image(q: Question) -> bool:
     Check if the question contains an image.
     """
     return q.get_img_path() is not None
+
+def _create_dummy_image() -> Image.Image:
+    """
+    Create a dummy image for cases where no image is provided.
+    Returns a consistent dummy image that won't cause processing issues.
+    """
+    return Image.new('RGB', (256, 256), color=(255, 255, 255))
 
 
 class Siglip2QBEmbedder:
@@ -48,12 +59,13 @@ class Siglip2QBEmbedder:
         self._model = model
         self._processor = processor
         self._logger = logger
+
         # Pre-create dummy image to avoid repeated creation
-        self._dummy_image = self._create_dummy_image()
+        self._dummy_image = _create_dummy_image()
 
         # Set max length based on model's position embeddings limit
         # Using 62 to leave some buffer for special tokens
-        self._max_length = 62
+        self._max_length = 64
 
     def encode_qb(self, qb: QuestionBank) -> Dict[str, np.ndarray]:
         """
@@ -89,49 +101,52 @@ class Siglip2QBEmbedder:
             tensor_embedding = self._encode_text_and_img(doc, image_path)
         else:
             tensor_embedding = self._encode_text(doc)
-        np_embedding = tensor_embedding.squeeze().detach().numpy()
-        self._logger.info(f"Completed encoding for Question {q.get_qid()}")
+
+        # Normalize the embedding to unit length
+        self._logger.debug(f"Normalizing embedding with shape {tensor_embedding.shape}")
+        normalized_embedding = normalize(tensor_embedding, p=2, dim=1)
+
+        np_embedding = normalized_embedding.squeeze().detach().numpy()
+        self._logger.debug(f"Encoding sample: {np_embedding[:5]}... (shape: {np_embedding.shape})")
+
+        self._logger.debug(f"Completed encoding for Question {q.get_qid()}")
         return np_embedding
 
     def _encode_text_and_img(self, doc: str, image_path: str) -> Tensor:
         """
         Encode both text and image into a vector space.
         """
-        self._logger.info("Encoding text and image.")
+        self._logger.debug("Encoding text and image.")
         with open(image_path, 'rb') as img_file:
             img = Image.open(img_file)
-        inputs = self._processor(text=doc, images=img, return_tensors="pt",
-                                 padding=True, truncation=True,
+
+        inputs = self._processor(text=doc,
+                                 images=img,
+                                 return_tensors="pt",
+                                 padding="max_length",
+                                 truncation=True,
                                  max_length=self._max_length)
         outputs = self._model(**inputs)
+
         # Average the text and image embeddings
         combined_embedding = (outputs.text_embeds + outputs.image_embeds) / 2.0
-        # Normalize the combined embedding
-        return normalize(combined_embedding, p=2, dim=-1)
+
+        return combined_embedding
 
     def _encode_text(self, doc: str) -> Tensor:
         """
         Encode question text using dummy image for a multimodal model.
         """
-        self._logger.info("Encoding text only with dummy image.")
+        self._logger.debug("Encoding text only with dummy image.")
 
         inputs = self._processor(
             text=doc,
             images=self._dummy_image,
             return_tensors="pt",
-            padding=True,
+            padding="max_length",
             truncation=True,
             max_length=self._max_length
         )
 
         outputs = self._model(**inputs)
         return outputs.text_embeds
-
-    def _create_dummy_image(self) -> Image.Image:
-        """
-        Create a dummy image for cases where no image is provided.
-        Returns a consistent dummy image that won't cause processing issues.
-        """
-        self._logger.debug("Creating dummy image for text-only encoding.")
-        # Create a small but valid RGB image
-        return Image.new('RGB', (256, 256), color=(255, 255, 255))
