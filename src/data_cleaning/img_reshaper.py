@@ -119,8 +119,8 @@ class ImgReshaper:
         if img.size == self._size:
             return img
         else:
-            # Create a white background image
-            background = Image.new('RGB', self._size, (255, 255, 255))
+            # Create a grey background image
+            background = Image.new('RGB', self._size, (127, 127, 127))
 
             # Calculate position to paste (center the image)
             paste_x = (self._size[0] - img.size[0]) // 2

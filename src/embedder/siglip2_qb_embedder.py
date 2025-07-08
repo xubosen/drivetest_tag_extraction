@@ -33,7 +33,7 @@ def _create_dummy_image() -> Image.Image:
     Create a dummy image for cases where no image is provided.
     Returns a consistent dummy image that won't cause processing issues.
     """
-    return Image.new('RGB', (256, 256), color=(255, 255, 255))
+    return Image.new('RGB', (256, 256), color=(127, 127, 127))
 
 
 class Siglip2QBEmbedder:
