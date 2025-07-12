@@ -3,7 +3,6 @@ from transformers.models.siglip2.modeling_siglip2 import Siglip2Model
 from transformers.models.siglip2.processing_siglip2 import Siglip2Processor
 from logging import Logger
 from typing import Dict
-from torch.nn.functional import normalize
 from torch import Tensor
 from PIL import Image
 
@@ -102,12 +101,9 @@ class Siglip2QBEmbedder:
         else:
             tensor_embedding = self._encode_text(doc)
 
-        # Normalize the embedding to unit length
-        self._logger.debug(f"Normalizing embedding with shape {tensor_embedding.shape}")
-        normalized_embedding = normalize(tensor_embedding, p=2, dim=1)
-
-        np_embedding = normalized_embedding.squeeze().detach().numpy()
-        self._logger.debug(f"Encoding sample: {np_embedding[:5]}... (shape: {np_embedding.shape})")
+        np_embedding = tensor_embedding.squeeze().detach().numpy()
+        self._logger.debug(f"Encoding sample: {np_embedding[:5]}..."
+                           f" (shape: {np_embedding.shape})")
 
         self._logger.debug(f"Completed encoding for Question {q.get_qid()}")
         return np_embedding
