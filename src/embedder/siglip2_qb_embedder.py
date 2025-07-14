@@ -19,17 +19,16 @@ MAX_LENGTH = 64
 DUMMY_IMG = Image.new(mode='RGB', size=(256, 256), color=(127, 127, 127))
 
 
-def format_question(q: Question, chapter: str,
-                    include_chapter: bool = False) -> str:
+def format_question(q: Question, chapter: str = None) -> str:
     """
     Format the question into a string suitable for encoding.
     """
-    if include_chapter:
-        text = (f"章节:{chapter}"
-                f"题目:{q.get_question()}"
+    if chapter is not None:
+        text = (f"章节:{chapter} "
+                f"题目:{q.get_question()} "
                 f"答案:{q.get_correct_answer()}")
     else:
-        text = (f"题目:{q.get_question()}"
+        text = (f"题目:{q.get_question()} "
                 f"答案:{q.get_correct_answer()}")
     return text
 
