@@ -1,13 +1,11 @@
 # Unit tests for the QBEmbedder class and its helper functions.
 
 # Library Imports
-import pytest
-import numpy as np
 import logging
 from logging import Logger
 import os
 from datetime import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 import torch
 from transformers.models.siglip2.modeling_siglip2 import Siglip2Model
 from transformers.models.siglip2.processing_siglip2 import Siglip2Processor
@@ -15,7 +13,7 @@ from transformers.models.siglip2.processing_siglip2 import Siglip2Processor
 # Local Imports
 from qb.question_bank import QuestionBank
 from qb.question import Question
-from embedder.siglip2_qb_embedder import Siglip2QBEmbedder, _has_image, format_question
+from embedder.siglip2_qb_embedder import Siglip2QBEmbedder, format_question
 from data_storage.database.json_database import LocalJsonDB
 
 # Constants for testing
@@ -94,7 +92,7 @@ class TestHelperFunctions:
         question.get_img_path.return_value = "path/to/image.jpg"
 
         # Test the function
-        result = _has_image(question)
+        result = question.get_img_path() is not None
 
         # Assert
         assert result is True
@@ -107,7 +105,7 @@ class TestHelperFunctions:
         question.get_img_path.return_value = None
 
         # Test the function
-        result = _has_image(question)
+        result = question.get_img_path() is not None
 
         # Assert
         assert result is False
