@@ -97,12 +97,24 @@ class QuestionBank:
         """
         return self._img_dir
 
-    def get_all_chapter_num(self) -> List[int]:
+    def set_img_dir(self, img_dir: str):
+        """
+        Set the image directory
+        """
+        img_dir = img_dir.strip()
+
+    def list_chapters(self) -> List[int]:
         """
         Return an ordered list of chapter numbers
         :return: An ordered list of chapter numbers
         """
         return sorted(self._chapters.keys())
+
+    def get_qid_list(self) -> List[str]:
+        """
+        Return an ordered list of question ids
+        """
+        return sorted(self._ids)
 
     def question_count(self, chapter_num: int = None) -> int:
         """

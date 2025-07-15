@@ -70,7 +70,7 @@ class Siglip2QBEmbedder:
         self._logger.info("Encoding question bank.")
 
         embeddings = {}
-        for chapter_id in qb.get_all_chapter_num():
+        for chapter_id in qb.list_chapters():
             self._logger.info(f"Encoding Chapter {chapter_id}")
             for id in qb.get_qids_by_chapter(chapter_id):
                 embeddings[id] = self._encode_q(qb.get_question(id),

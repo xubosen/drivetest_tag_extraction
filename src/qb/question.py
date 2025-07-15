@@ -1,5 +1,5 @@
 # Data class for a question
-from typing import Set
+from typing import Set, Tuple
 
 class Question:
     """
@@ -10,9 +10,12 @@ class Question:
     _img_path: str | None
     _answers: Set[str]
     _correct_answer: str
+    _tags: list[str]
+    _chapter: Tuple[int, str]
 
     def __init__(self, qid: str, question: str, answers: Set[str],
-                 correct_answer: str, img_path: str | None = None):
+                 correct_answer: str, img_path: str | None = None,
+                 tags: list[str] = None, chapter: Tuple[int, str] = None):
         """
         Initializes the Question with the provided parameters.
 
@@ -27,6 +30,8 @@ class Question:
         self._answers = answers
         self._correct_answer = correct_answer
         self._img_path = img_path
+        self._tags = [] if tags is None else tags
+        self._chapter = "" if chapter is None else chapter
         self._check_format()
 
     def _check_format(self):
@@ -105,6 +110,48 @@ class Question:
         if img_path is not None and not isinstance(img_path, str):
             raise IncorrectFormatError("Image path must be a string or None.")
         self._img_path = img_path
+
+    def set_chapter(self, chapter: Tuple[int, str]):
+        """
+        Set the chapter information for this question.
+
+        :param chapter: A tuple containing chapter number and chapter name
+        """
+        self._chapter = chapter
+
+    def get_chapter(self) -> Tuple[int, str]:
+        """
+        Get the chapter information for this question.
+
+        :return: A tuple containing chapter number and chapter name
+        """
+        return self._chapter
+
+    def get_tags(self) -> list[str]:
+        """
+        Get the list of tags associated with this question.
+
+        :return: List of tag strings
+        """
+        return self._tags.copy()
+
+    def set_tags(self, tags: list[str]):
+        """
+        Set the list of tags associated with this question.
+
+        :param tags: List of tag strings to associate with this question
+        """
+        self._tags = tags.copy()
+
+    def add_tag(self, tag: str):
+        """
+        Add a single tag to the question's existing tags.
+
+        :param tag: Tag string to add to the question
+        """
+
+        self._tags.append(tag)
+
 
 class IncorrectFormatError(TypeError):
     """ Error class for incorrect question format. """
