@@ -4,11 +4,11 @@
 import json
 import os
 import shutil
-from typing import Dict, Any
+from typing import Dict, List, Any
 
-from src.data_storage.database.database_interface import Database
-from src.qb.question_bank import QuestionBank
-from src.qb.question import Question
+from data_storage.database.database_interface import Database
+from qb.question_bank import QuestionBank
+from qb.question import Question
 
 
 class LocalJsonDB(Database):
@@ -67,28 +67,29 @@ class LocalJsonDB(Database):
         """
         chapters, chapter_to_qids, questions = {}, {}, {}
         for chapter in qb.list_chapters():
-            chapters[str(chapter)] = qb.describe_chapter(chapter)
-            self.serialize_chapter(chapter, chapter_to_qids, qb,
-                                   questions)
+            chapters[chapter] = qb.describe_chapter(chapter)
+            self.serialize_chapter(chapter, chapter_to_qids, qb, questions)
         return {"chapters": chapters,
                 "chap_to_qids": chapter_to_qids,
                 "questions": questions,
                 "img_dir": self._img_dir
                 }
 
-    def serialize_chapter(self, chapter_number, chapter_to_qids, qb,
-                          questions):
-        chapter_str = str(chapter_number)
-        chapter_to_qids[chapter_str] = sorted(list(
-            qb.get_qids_by_chapter(chapter_number)))
-        for qid in chapter_to_qids[chapter_str]:
+    def serialize_chapter(self, chapter: int,
+                          chapter_to_qids: Dict[int, List[str]],
+                          qb: QuestionBank, questions: Dict[str, Any]):
+        chapter_to_qids[chapter] = sorted(list(qb.get_qids_by_chapter(chapter)))
+        for qid in chapter_to_qids[chapter]:
             question = qb.get_question(qid)
             questions[qid] = {
                 "qid": question.get_qid(),
                 "question": question.get_question(),
                 "answers": list(question.get_answers()),
                 "correct_answer": question.get_correct_answer(),
-                "img_path": self._make_img_path(question)
+                "img_path": self._make_img_path(question),
+                "chapter": chapter,
+                "tags": [],
+                "keywords": []
             }
 
     def _make_img_path(self, question) -> str:
@@ -103,29 +104,26 @@ class LocalJsonDB(Database):
         :param data: Dictionary containing serialized QuestionBank data
         :return: Reconstructed QuestionBank
         """
-        # Create a new QuestionBank
         qb = QuestionBank(self._img_dir)
-
-        # If the database is empty, return an empty QuestionBank
         if not data.get("chapters"):
-            return qb
-
+            return qb # Database is empty, return empty QuestionBank
         self._add_chapters(data, qb)
         self._add_questions(data, qb)
         return qb
 
     def _add_questions(self, data, qb):
         for qid, q_data in data["questions"].items():
-            chapter_num = self._get_chapter_num(data, qid)
+            chapter = self._get_chapter_num(data, qid)
             img_path = self._get_img_path(q_data)
             question = Question(
                 qid=q_data["qid"],
                 question=q_data["question"],
                 answers=set(q_data["answers"]),
                 correct_answer=q_data["correct_answer"],
-                img_path=img_path
+                img_path=img_path,
+                chapter=(chapter, qb.describe_chapter(chapter))
             )
-            qb.add_question(question, chapter_num)
+            qb.add_question(question, chapter)
 
     def _get_img_path(self, q_data):
         img_path = q_data["img_path"]
@@ -134,9 +132,9 @@ class LocalJsonDB(Database):
     def _get_chapter_num(self, data, qid) -> int:
         # Find which chapter this question belongs to
         chapter_num = None
-        for chap_num_str, qids in data["chap_to_qids"].items():
+        for chap_num, qids in data["chap_to_qids"].items():
             if qid in qids:
-                chapter_num = int(chap_num_str)
+                chapter_num = int(chap_num)
                 break
         if chapter_num is None:
             raise ValueError(f"Question ID {qid} does not belong to any chapter.")

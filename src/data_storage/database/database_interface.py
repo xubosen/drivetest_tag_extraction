@@ -1,7 +1,7 @@
 # Public interface for the database module
 from abc import ABC, abstractmethod
 
-from src.qb.question_bank import QuestionBank
+from qb.question_bank import QuestionBank
 
 
 class Database(ABC):
