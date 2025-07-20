@@ -1,9 +1,9 @@
 import os
 
-from src.data_storage.database.database_interface import Database
-from src.data_storage.database.local_json_db import LocalJsonDB
-from src.qb.question_bank import QuestionBank
-from src.data_cleaning.img_reshaper import ImgReshaper
+from data_storage.database.database_interface import Database
+from data_storage.database.local_json_db import LocalJsonDB
+from qb.question_bank import QuestionBank
+from data_cleaning.img_reshaper import ImgReshaper
 
 class DataFormatter:
     """
@@ -16,7 +16,7 @@ class DataFormatter:
         """
         self._reshaper = image_reshaper
 
-    def format_data(self, data: Database, output_directory: str) -> Database:
+    def format_data(self, data: Database, output_directory: str) -> QuestionBank:
         """
         Formats the question bank for automatic labeling.
         """
@@ -31,7 +31,7 @@ class DataFormatter:
         self._set_up_question_chapters(qb)
         new_db = LocalJsonDB(db_file_path=file_dir, img_dir=img_dir)
         new_db.save(qb)
-        return new_db
+        return qb
 
     def _resize_images(self, qb: QuestionBank, new_img_dir: str) -> None:
         """ Resize images in the question bank and update their paths. """
