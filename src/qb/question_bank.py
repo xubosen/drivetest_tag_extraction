@@ -1,6 +1,6 @@
 from typing import Dict, Set, List
 
-from src.qb.question import Question
+from qb.question import Question
 
 class QuestionBank:
     """
@@ -101,7 +101,7 @@ class QuestionBank:
         """
         Set the image directory
         """
-        img_dir = img_dir.strip()
+        self._img_dir = img_dir.strip()
 
     def list_chapters(self) -> List[int]:
         """
