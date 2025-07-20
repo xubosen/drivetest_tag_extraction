@@ -68,16 +68,15 @@ class LocalJsonDB(Database):
         chapters, chapter_to_qids, questions = {}, {}, {}
         for chapter in qb.list_chapters():
             chapters[chapter] = qb.describe_chapter(chapter)
-            self.serialize_chapter(chapter, chapter_to_qids, qb, questions)
+            self._serialize_chapter(chapter, chapter_to_qids, qb, questions)
         return {"chapters": chapters,
                 "chap_to_qids": chapter_to_qids,
                 "questions": questions,
-                "img_dir": self._img_dir
-                }
+                "img_dir": self._img_dir}
 
-    def serialize_chapter(self, chapter: int,
-                          chapter_to_qids: Dict[int, List[str]],
-                          qb: QuestionBank, questions: Dict[str, Any]):
+    def _serialize_chapter(self, chapter: int,
+                           chapter_to_qids: Dict[int, List[str]],
+                           qb: QuestionBank, questions: Dict[str, Any]):
         chapter_to_qids[chapter] = sorted(list(qb.get_qids_by_chapter(chapter)))
         for qid in chapter_to_qids[chapter]:
             question = qb.get_question(qid)
