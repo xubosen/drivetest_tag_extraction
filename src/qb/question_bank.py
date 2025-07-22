@@ -1,4 +1,4 @@
-from typing import Dict, Set, List
+from typing import Any, Dict, Self, Set, List
 import os
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -177,6 +177,46 @@ class QuestionBank(BaseModel):
         """
         return len(self.qids) if chapter_num is None \
             else len(self.chap_num_to_ids[chapter_num])
+
+    @classmethod
+    def model_validate(
+        cls,
+        obj: Any,
+        *,
+        strict: bool | None = None,
+        from_attributes: bool | None = None,
+        context: Any | None = None,
+        by_alias: bool | None = None,
+        by_name: bool | None = None,
+    ) -> Self:
+        """
+        Validate an object against the model.
+
+        :param obj: The object to validate
+        :return: An instance of QuestionBank if validation is successful
+        """
+        try:
+            for item in obj:
+                if item not in cls.model_fields:
+                    raise ValueError(f"Unexpected field: {item}")
+            if "img_dir" not in obj.keys():
+                raise ValueError("Missing required field: img_dir")
+
+            qids = obj["qids"] if "qids" in obj else set()
+            chapters = obj["chapters"] if "chapters" in obj else {}
+            chap_num_to_ids = obj["chap_num_to_ids"] if ("chap_num_to_ids"
+                                                          in obj) else {}
+            id_to_q = obj["id_to_q"] if "id_to_q" in obj else {}
+
+            return QuestionBank(
+                img_dir=obj["img_dir"],
+                qids=qids,
+                chapters=chapters,
+                chap_num_to_ids=chap_num_to_ids,
+                id_to_q=id_to_q
+            )
+        except Exception as e:
+            raise ValueError(f"Validation failed: {e}")
 
     class Config:
         """Pydantic configuration."""

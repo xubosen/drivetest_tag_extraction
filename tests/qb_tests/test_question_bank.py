@@ -1,6 +1,7 @@
 import pytest
 import tempfile
 import os
+import json
 from pydantic import ValidationError
 
 from qb.question_bank import QuestionBank
@@ -943,3 +944,348 @@ class TestQuestionBankPydanticFeatures:
         )
         assert qb_updated.chapters[1] == "Updated Chapter"
         assert qb_original.chapters[1] == "Original Chapter"
+
+
+class TestQuestionBankSerialization:
+    """Test Pydantic serialization and deserialization for QuestionBank."""
+
+    def test_model_dump_empty_bank(self):
+        """Test dumping an empty QuestionBank to dictionary."""
+        qb = QuestionBank(img_dir=SAMPLE_VALID_IMG_DIR)
+        dumped = qb.model_dump()
+
+        expected_keys = {'img_dir', 'qids', 'chapters', 'chap_num_to_ids', 'id_to_q'}
+        assert set(dumped.keys()) == expected_keys
+        assert dumped['img_dir'] == SAMPLE_VALID_IMG_DIR
+        assert dumped['qids'] == set()
+        assert dumped['chapters'] == {}
+        assert dumped['chap_num_to_ids'] == {}
+        assert dumped['id_to_q'] == {}
+
+    def test_model_dump_populated_bank(self):
+        """Test dumping a populated QuestionBank to dictionary."""
+        qb = QuestionBank(img_dir=SAMPLE_VALID_IMG_DIR)
+        qb.add_chapter(1, "Test Chapter")
+
+        question = Question(
+            qid="q1",
+            question="Test question?",
+            answers={"A", "B", "C", "D"},
+            correct_answer="A",
+            chapter=(1, "Test Chapter")
+        )
+        qb.add_question(question, 1)
+
+        dumped = qb.model_dump()
+
+        assert dumped['img_dir'] == SAMPLE_VALID_IMG_DIR
+        assert dumped['qids'] == {"q1"}
+        assert dumped['chapters'] == {1: "Test Chapter"}
+        assert dumped['chap_num_to_ids'] == {1: {"q1"}}
+        assert "q1" in dumped['id_to_q']
+        assert isinstance(dumped['id_to_q']["q1"], dict)  # Question is also dumped
+
+    def test_model_dump_exclude_fields(self):
+        """Test dumping QuestionBank with excluded fields."""
+        qb = QuestionBank(img_dir=SAMPLE_VALID_IMG_DIR)
+        qb.add_chapter(1, "Test Chapter")
+
+        # Exclude img_dir and id_to_q
+        dumped = qb.model_dump(exclude={'img_dir', 'id_to_q'})
+
+        assert 'img_dir' not in dumped
+        assert 'id_to_q' not in dumped
+        assert 'qids' in dumped
+        assert 'chapters' in dumped
+        assert 'chap_num_to_ids' in dumped
+
+    def test_model_dump_include_fields(self):
+        """Test dumping QuestionBank with only included fields."""
+        qb = QuestionBank(img_dir=SAMPLE_VALID_IMG_DIR)
+        qb.add_chapter(1, "Test Chapter")
+
+        # Include only img_dir and chapters
+        dumped = qb.model_dump(include={'img_dir', 'chapters'})
+
+        assert set(dumped.keys()) == {'img_dir', 'chapters'}
+        assert dumped['img_dir'] == SAMPLE_VALID_IMG_DIR
+        assert dumped['chapters'] == {1: "Test Chapter"}
+
+    def test_model_validate_empty_data(self):
+        """Test creating QuestionBank from minimal valid dictionary."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            data = {'img_dir': temp_dir}
+            qb = QuestionBank.model_validate(data)
+
+            assert qb.img_dir == temp_dir
+            assert qb.qids == set()
+            assert qb.chapters == {}
+            assert qb.chap_num_to_ids == {}
+            assert qb.id_to_q == {}
+
+    def test_model_validate_full_data(self):
+        """Test creating QuestionBank from complete dictionary."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create a Question first to get its dict representation
+            question = Question(
+                qid="q1",
+                question="Test question?",
+                answers={"A", "B", "C", "D"},
+                correct_answer="A",
+                chapter=(1, "Test Chapter")
+            )
+
+            data = {
+                'img_dir': temp_dir,
+                'qids': {"q1"},
+                'chapters': {1: "Test Chapter"},
+                'chap_num_to_ids': {1: {"q1"}},
+                'id_to_q': {"q1": question.model_dump()}
+            }
+
+            qb = QuestionBank.model_validate(data)
+
+            assert qb.img_dir == temp_dir
+            assert qb.qids == {"q1"}
+            assert qb.chapters == {1: "Test Chapter"}
+            assert qb.chap_num_to_ids == {1: {"q1"}}
+            assert "q1" in qb.id_to_q
+            assert isinstance(qb.id_to_q["q1"], Question)
+            assert qb.id_to_q["q1"].get_qid() == "q1"
+
+    def test_model_validate_invalid_data(self):
+        """Test model_validate with invalid data raises ValidationError."""
+        # Missing required img_dir
+        with pytest.raises(ValueError) as exc_info:
+            QuestionBank.model_validate({})
+        assert "required field" in str(exc_info.value)
+
+        # Invalid img_dir (non-existent directory)
+        with pytest.raises(ValueError) as exc_info:
+            QuestionBank.model_validate({'img_dir': '/non/existent/path'})
+        assert "Image directory does not exist" in str(exc_info.value)
+
+        # Invalid chapter data
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with pytest.raises(ValueError) as exc_info:
+                QuestionBank.model_validate({
+                    'img_dir': temp_dir,
+                    'chapters': {-1: "Invalid Chapter"}
+                })
+            assert ("Chapter number must be a "
+                    "positive integer") in str(exc_info.value)
+
+    def test_round_trip_serialization_empty(self):
+        """Test round-trip serialization for empty QuestionBank."""
+        original = QuestionBank(img_dir=SAMPLE_VALID_IMG_DIR)
+
+        # Dump to dict and reload
+        dumped = original.model_dump()
+        reloaded = QuestionBank.model_validate(dumped)
+
+        assert reloaded.img_dir == original.img_dir
+        assert reloaded.qids == original.qids
+        assert reloaded.chapters == original.chapters
+        assert reloaded.chap_num_to_ids == original.chap_num_to_ids
+        assert reloaded.id_to_q == original.id_to_q
+
+    def test_round_trip_serialization_populated(self):
+        """Test round-trip serialization for populated QuestionBank."""
+        original = QuestionBank(img_dir=SAMPLE_VALID_IMG_DIR)
+
+        # Add test data
+        original.add_chapter(1, "Chapter One")
+        original.add_chapter(2, "Chapter Two")
+
+        questions = [
+            Question(
+                qid="q1",
+                question="Question 1?",
+                answers={"A", "B", "C", "D"},
+                correct_answer="A",
+                chapter=(1, "Chapter One"),
+                tags=["tag1", "tag2"],
+                keywords=["key1", "key2"]
+            ),
+            Question(
+                qid="q2",
+                question="Question 2?",
+                answers={"True", "False"},
+                correct_answer="True",
+                chapter=(2, "Chapter Two"),
+                tags=["tag3"],
+                keywords=["key3"]
+            )
+        ]
+
+        for i, question in enumerate(questions):
+            original.add_question(question, i + 1)
+
+        # Dump to dict and reload
+        dumped = original.model_dump()
+        reloaded = QuestionBank.model_validate(dumped)
+
+        # Verify all data is preserved
+        assert reloaded.img_dir == original.img_dir
+        assert reloaded.qids == original.qids
+        assert reloaded.chapters == original.chapters
+        assert reloaded.chap_num_to_ids == original.chap_num_to_ids
+        assert len(reloaded.id_to_q) == len(original.id_to_q)
+
+        # Verify individual questions
+        for qid in original.qids:
+            orig_q = original.get_question(qid)
+            reloaded_q = reloaded.get_question(qid)
+
+            assert reloaded_q.get_qid() == orig_q.get_qid()
+            assert reloaded_q.get_question() == orig_q.get_question()
+            assert reloaded_q.get_answers() == orig_q.get_answers()
+            assert reloaded_q.get_correct_answer() == orig_q.get_correct_answer()
+            assert reloaded_q.get_chapter() == orig_q.get_chapter()
+            assert reloaded_q.get_tags() == orig_q.get_tags()
+            assert reloaded_q.get_keywords() == orig_q.get_keywords()
+
+    def test_json_serialization_compatibility(self):
+        """Test that model_dump produces JSON-serializable output."""
+        qb = QuestionBank(img_dir=SAMPLE_VALID_IMG_DIR)
+        qb.add_chapter(1, "Test Chapter")
+
+        question = Question(
+            qid="q1",
+            question="Test question?",
+            answers={"A", "B", "C", "D"},
+            correct_answer="A",
+            chapter=(1, "Test Chapter")
+        )
+        qb.add_question(question, 1)
+
+        # Test that dumped data can be JSON serialized
+        dumped = qb.model_dump()
+        json_str = json.dumps(dumped, default=str)  # Convert sets to str for JSON
+        assert isinstance(json_str, str)
+        assert len(json_str) > 0
+
+        # Test mode='json' for JSON-compatible output
+        json_dumped = qb.model_dump(mode='json')
+        json_str = json.dumps(json_dumped)
+
+        # Should be able to parse back
+        parsed = json.loads(json_str)
+        assert isinstance(parsed, dict)
+        assert 'img_dir' in parsed
+
+    def test_model_dump_with_nested_exclude(self):
+        """Test model_dump with nested field exclusions."""
+        qb = QuestionBank(img_dir=SAMPLE_VALID_IMG_DIR)
+        qb.add_chapter(1, "Test Chapter")
+
+        question = Question(
+            qid="q1",
+            question="Test question?",
+            answers={"A", "B", "C", "D"},
+            correct_answer="A",
+            chapter=(1, "Test Chapter"),
+            tags=["tag1"],
+            keywords=["key1"]
+        )
+        qb.add_question(question, 1)
+
+        # Exclude tags from nested Question objects
+        dumped = qb.model_dump(exclude={'id_to_q': {'__all__': {'tags'}}})
+
+        assert 'id_to_q' in dumped
+        question_dict = dumped['id_to_q']['q1']
+        assert 'tags' not in question_dict
+        assert 'keywords' in question_dict  # Should still be present
+
+    def test_model_validate_with_extra_fields(self):
+        """Test model_validate rejects extra fields due to extra='forbid'."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            data = {
+                'img_dir': temp_dir,
+                'extra_field': 'This should not be allowed'
+            }
+
+            with pytest.raises(ValueError) as exc_info:
+                QuestionBank.model_validate(data)
+            assert "Unexpected field" in str(exc_info.value)
+
+    def test_model_validate_partial_data_with_defaults(self):
+        """Test that model_validate uses default values for missing optional fields."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Only provide required field
+            data = {'img_dir': temp_dir}
+            qb = QuestionBank.model_validate(data)
+
+            # All optional fields should have their default values
+            assert qb.qids == set()
+            assert qb.chapters == {}
+            assert qb.chap_num_to_ids == {}
+            assert qb.id_to_q == {}
+
+    def test_serialization_with_unicode_data(self):
+        """Test serialization/deserialization with unicode content."""
+        qb = QuestionBank(img_dir=SAMPLE_VALID_IMG_DIR)
+        qb.add_chapter(1, "Chapitre 1: Règles de base")
+
+        question = Question(
+            qid="测试问题1",
+            question="这是一个测试问题吗？",
+            answers={"是", "不是", "可能", "不确定"},
+            correct_answer="是",
+            chapter=(1, "Chapitre 1: Règles de base"),
+            tags=["测试", "unicode"],
+            keywords=["关键词", "keyword"]
+        )
+        qb.add_question(question, 1)
+
+        # Test round-trip with unicode data
+        dumped = qb.model_dump()
+        reloaded = QuestionBank.model_validate(dumped)
+
+        assert reloaded.chapters[1] == "Chapitre 1: Règles de base"
+        reloaded_question = reloaded.get_question("测试问题1")
+        assert reloaded_question.get_question() == "这是一个测试问题吗？"
+        assert "是" in reloaded_question.get_answers()
+        assert reloaded_question.get_tags() == ["测试", "unicode"]
+
+    def test_model_dump_exclude_unset(self):
+        """Test model_dump with exclude_unset parameter."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create QuestionBank with only required field
+            qb = QuestionBank(img_dir=temp_dir)
+
+            # Default dump includes all fields
+            dumped_all = qb.model_dump()
+            assert 'qids' in dumped_all
+            assert 'chapters' in dumped_all
+
+            # With exclude_unset=True, should exclude fields that weren't explicitly set
+            dumped_set = qb.model_dump(exclude_unset=True)
+            assert 'img_dir' in dumped_set
+            # Note: Due to default_factory, these fields are considered "set"
+            # This test mainly verifies the parameter works without error
+
+    def test_model_dump_exclude_none(self):
+        """Test model_dump with exclude_none parameter."""
+        qb = QuestionBank(img_dir=SAMPLE_VALID_IMG_DIR)
+        qb.add_chapter(1, "Test Chapter")
+
+        # Add question without image path (None value)
+        question = Question(
+            qid="q1",
+            question="Test question?",
+            answers={"A", "B"},
+            correct_answer="A",
+            chapter=(1, "Test Chapter"),
+            img_path=None  # Explicitly None
+        )
+        qb.add_question(question, 1)
+
+        dumped_with_none = qb.model_dump()
+        dumped_exclude_none = qb.model_dump(exclude_none=True)
+
+        # Both should be valid, this mainly tests the parameter works
+        assert isinstance(dumped_with_none, dict)
+        assert isinstance(dumped_exclude_none, dict)
+
