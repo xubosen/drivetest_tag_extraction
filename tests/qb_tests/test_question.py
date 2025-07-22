@@ -1,6 +1,7 @@
 import pytest
 from qb.question import Question
 from pydantic import ValidationError
+import json
 
 SAMPLE_IMG_PATH = "test_db/raw_db/images/0a1e1.webp"
 SAMPLE_IMG_PATH2 = "test_db/raw_db/images/0b5ae.webp"
@@ -20,7 +21,7 @@ class TestQuestionCreation:
         assert question.question == "What is the speed limit?"
         assert question.answers == {"50 km/h", "60 km/h"}
         assert question.correct_answer == "50 km/h"
-        assert question.chapter == (0, "")
+        assert question.chapter is None
         assert question.img_path is None
         assert question.tags == []
         assert question.keywords == []
@@ -247,7 +248,7 @@ class TestQuestionGetters:
             answers={"A", "B"},
             correct_answer="A"
         )
-        assert question.get_chapter() == (0, "")
+        assert question.get_chapter() is None
 
     def test_get_tags(self):
         """Test that get_tags returns the correct list of tags."""
@@ -507,6 +508,7 @@ class TestChapterMethods:
         with pytest.raises(ValidationError) as exc_info:
             question.set_chapter(new_chapter)
         assert "Chapter name must be a non-empty string" in str(exc_info.value)
+
 
 class TestTagMethods:
     """Test class for tag-related methods."""
@@ -929,3 +931,291 @@ class TestQuestionEdgeCases:
         # Test that all special characters are preserved
         for answer in special_answers:
             assert answer in question.get_answers()
+
+
+class TestQuestionSerialization:
+    """Test class for Pydantic serialization and deserialization."""
+
+    def test_model_dump_minimal_question(self):
+        """Test dumping a Question with minimal required fields to dictionary."""
+        question = Question(
+            qid="q1",
+            question="What is the speed limit?",
+            answers={"50 km/h", "60 km/h"},
+            correct_answer="50 km/h"
+        )
+
+        dumped = question.model_dump()
+
+        assert dumped["qid"] == "q1"
+        assert dumped["question"] == "What is the speed limit?"
+        assert set(dumped["answers"]) == {"50 km/h", "60 km/h"}
+        assert dumped["correct_answer"] == "50 km/h"
+        assert dumped["chapter"] is None
+        assert dumped["img_path"] is None
+        assert dumped["tags"] == []
+        assert dumped["keywords"] == []
+
+    def test_model_dump_full_question(self):
+        """Test dumping a Question with all fields to dictionary."""
+        question = Question(
+            qid="q2",
+            chapter=(3, "Traffic Rules"),
+            question="When should you stop at a red light?",
+            img_path=SAMPLE_IMG_PATH,
+            answers={"Immediately", "After 3 seconds", "Never"},
+            correct_answer="Immediately",
+            tags=["traffic", "signals"],
+            keywords=["red light", "stop"]
+        )
+
+        dumped = question.model_dump()
+
+        assert dumped["qid"] == "q2"
+        assert dumped["chapter"] == (3, "Traffic Rules")
+        assert dumped["question"] == "When should you stop at a red light?"
+        assert dumped["img_path"] == SAMPLE_IMG_PATH
+        assert set(dumped["answers"]) == {"Immediately", "After 3 seconds", "Never"}
+        assert dumped["correct_answer"] == "Immediately"
+        assert dumped["tags"] == ["traffic", "signals"]
+        assert dumped["keywords"] == ["red light", "stop"]
+
+    def test_model_validate_from_dict_minimal(self):
+        """Test loading a Question from dictionary with minimal fields."""
+        data = {
+            "qid": "q1",
+            "question": "What is the speed limit?",
+            "answers": ["50 km/h", "60 km/h"],
+            "correct_answer": "50 km/h"
+        }
+
+        question = Question.model_validate(data)
+
+        assert question.qid == "q1"
+        assert question.question == "What is the speed limit?"
+        assert question.answers == {"50 km/h", "60 km/h"}
+        assert question.correct_answer == "50 km/h"
+        assert question.chapter is None
+        assert question.img_path is None
+        assert question.tags == []
+        assert question.keywords == []
+
+    def test_model_validate_from_dict_full(self):
+        """Test loading a Question from dictionary with all fields."""
+        data = {
+            "qid": "q2",
+            "chapter": [3, "Traffic Rules"],
+            "question": "When should you stop at a red light?",
+            "img_path": SAMPLE_IMG_PATH,
+            "answers": ["Immediately", "After 3 seconds", "Never"],
+            "correct_answer": "Immediately",
+            "tags": ["traffic", "signals"],
+            "keywords": ["red light", "stop"]
+        }
+
+        question = Question.model_validate(data)
+
+        assert question.qid == "q2"
+        assert question.chapter == (3, "Traffic Rules")
+        assert question.question == "When should you stop at a red light?"
+        assert question.img_path == SAMPLE_IMG_PATH
+        assert question.answers == {"Immediately", "After 3 seconds", "Never"}
+        assert question.correct_answer == "Immediately"
+        assert question.tags == ["traffic", "signals"]
+        assert question.keywords == ["red light", "stop"]
+
+    def test_round_trip_serialization_minimal(self):
+        """Test that a Question can be dumped and loaded without data loss (minimal)."""
+        original = Question(
+            qid="q1",
+            question="What is the speed limit?",
+            answers={"50 km/h", "60 km/h"},
+            correct_answer="50 km/h"
+        )
+
+        # Dump to dict and load back
+        dumped = original.model_dump()
+        loaded = Question.model_validate(dumped)
+
+        assert loaded.qid == original.qid
+        assert loaded.question == original.question
+        assert loaded.answers == original.answers
+        assert loaded.correct_answer == original.correct_answer
+        assert loaded.chapter == original.chapter
+        assert loaded.img_path == original.img_path
+        assert loaded.tags == original.tags
+        assert loaded.keywords == original.keywords
+
+    def test_round_trip_serialization_full(self):
+        """Test that a Question can be dumped and loaded without data loss (full)."""
+        original = Question(
+            qid="q2",
+            chapter=(3, "Traffic Rules"),
+            question="When should you stop at a red light?",
+            img_path=SAMPLE_IMG_PATH,
+            answers={"Immediately", "After 3 seconds", "Never"},
+            correct_answer="Immediately",
+            tags=["traffic", "signals"],
+            keywords=["red light", "stop"]
+        )
+
+        # Dump to dict and load back
+        dumped = original.model_dump()
+        loaded = Question.model_validate(dumped)
+
+        assert loaded.qid == original.qid
+        assert loaded.chapter == original.chapter
+        assert loaded.question == original.question
+        assert loaded.img_path == original.img_path
+        assert loaded.answers == original.answers
+        assert loaded.correct_answer == original.correct_answer
+        assert loaded.tags == original.tags
+        assert loaded.keywords == original.keywords
+
+    def test_json_serialization_minimal(self):
+        """Test JSON serialization and deserialization for minimal Question."""
+        question = Question(
+            qid="q1",
+            question="What is the speed limit?",
+            answers={"50 km/h", "60 km/h"},
+            correct_answer="50 km/h"
+        )
+
+        # Serialize to JSON
+        json_str = question.model_dump_json()
+        assert isinstance(json_str, str)
+
+        # Deserialize from JSON
+        data = json.loads(json_str)
+        loaded = Question.model_validate(data)
+
+        assert loaded.qid == question.qid
+        assert loaded.question == question.question
+        assert loaded.answers == question.answers
+        assert loaded.correct_answer == question.correct_answer
+
+    def test_json_serialization_full(self):
+        """Test JSON serialization and deserialization for full Question."""
+        question = Question(
+            qid="q2",
+            chapter=(3, "Traffic Rules"),
+            question="When should you stop at a red light?",
+            img_path=SAMPLE_IMG_PATH,
+            answers={"Immediately", "After 3 seconds", "Never"},
+            correct_answer="Immediately",
+            tags=["traffic", "signals"],
+            keywords=["red light", "stop"]
+        )
+
+        # Serialize to JSON
+        json_str = question.model_dump_json()
+        assert isinstance(json_str, str)
+
+        # Deserialize from JSON
+        data = json.loads(json_str)
+        loaded = Question.model_validate(data)
+
+        assert loaded.qid == question.qid
+        assert loaded.chapter == question.chapter
+        assert loaded.question == question.question
+        assert loaded.img_path == question.img_path
+        assert loaded.answers == question.answers
+        assert loaded.correct_answer == question.correct_answer
+        assert loaded.tags == question.tags
+        assert loaded.keywords == question.keywords
+
+    def test_model_validate_with_invalid_data(self):
+        """Test that model_validate raises ValidationError for invalid data."""
+        invalid_data = {
+            "qid": "",  # Invalid: empty string
+            "question": "What is the speed limit?",
+            "answers": ["50 km/h"],  # Invalid: only one answer
+            "correct_answer": "50 km/h"
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            Question.model_validate(invalid_data)
+        assert "qid" in str(exc_info.value) or "answers" in str(exc_info.value)
+
+    def test_model_dump_exclude_fields(self):
+        """Test dumping Question while excluding specific fields."""
+        question = Question(
+            qid="q1",
+            chapter=(3, "Traffic Rules"),
+            question="What is the speed limit?",
+            img_path=SAMPLE_IMG_PATH,
+            answers={"50 km/h", "60 km/h"},
+            correct_answer="50 km/h",
+            tags=["traffic"],
+            keywords=["speed"]
+        )
+
+        # Exclude sensitive or unwanted fields
+        dumped = question.model_dump(exclude={"img_path", "keywords"})
+
+        assert "img_path" not in dumped
+        assert "keywords" not in dumped
+        assert "qid" in dumped
+        assert "question" in dumped
+        assert "tags" in dumped
+
+    def test_model_dump_include_fields(self):
+        """Test dumping Question while including only specific fields."""
+        question = Question(
+            qid="q1",
+            question="What is the speed limit?",
+            answers={"50 km/h", "60 km/h"},
+            correct_answer="50 km/h"
+        )
+
+        # Include only essential fields
+        dumped = question.model_dump(include={"qid", "question", "correct_answer"})
+
+        assert len(dumped) == 3
+        assert dumped["qid"] == "q1"
+        assert dumped["question"] == "What is the speed limit?"
+        assert dumped["correct_answer"] == "50 km/h"
+        assert "answers" not in dumped
+        assert "tags" not in dumped
+
+    def test_model_validate_with_extra_fields_ignored(self):
+        """Test that model_validate handles unknown fields according to config."""
+        data = {
+            "qid": "q1",
+            "question": "What is the speed limit?",
+            "answers": ["50 km/h", "60 km/h"],
+            "correct_answer": "50 km/h",
+            "unknown_field": "this should be rejected"
+        }
+
+        # Should raise ValidationError due to extra='forbid'
+        with pytest.raises(ValidationError) as exc_info:
+            Question.model_validate(data)
+        assert "Extra inputs are not permitted" in str(exc_info.value)
+
+    def test_serialization_preserves_data_types(self):
+        """Test that serialization preserves complex data types correctly."""
+        question = Question(
+            qid="q1",
+            chapter=(5, "Advanced Rules"),
+            question="Complex question with unicode: 测试",
+            answers={"答案A", "Answer B", "Réponse C"},
+            correct_answer="答案A",
+            tags=["unicode", "测试"],
+            keywords=["complex", "特殊字符"]
+        )
+
+        # Test round-trip preservation
+        dumped = question.model_dump()
+        loaded = Question.model_validate(dumped)
+
+        # Verify unicode characters are preserved
+        assert "测试" in loaded.question
+        assert "答案A" in loaded.answers
+        assert "测试" in loaded.tags
+        assert "特殊字符" in loaded.keywords
+
+        # Verify tuple/list conversion works correctly
+        assert isinstance(loaded.chapter, tuple)
+        assert loaded.chapter == (5, "Advanced Rules")
+
