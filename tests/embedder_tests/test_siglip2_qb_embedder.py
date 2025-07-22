@@ -11,10 +11,10 @@ from transformers.models.siglip2.modeling_siglip2 import Siglip2Model
 from transformers.models.siglip2.processing_siglip2 import Siglip2Processor
 
 # Local Imports
-from qb.question_bank import QuestionBank
-from qb.question import Question
+from entities.question_bank import QuestionBank
+from entities.question import Question
 from label_clustering.embedder.siglip2_qb_embedder import Siglip2QBEmbedder, format_question
-from data_storage.database.json_database import LocalJsonDB
+from data_storage.raw_database.json_database import LocalJsonDB
 
 # Constants for testing
 FILE_PATH = "test_db/db_file.json"

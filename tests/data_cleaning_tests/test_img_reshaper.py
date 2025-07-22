@@ -6,7 +6,7 @@ from PIL import Image
 import os
 
 # Local Imports
-from data_cleaning.img_reshaper import ImgReshaper
+from data_formatting.img_reshaper import ImgReshaper
 
 TEST_IMG_DIR = "test_db/raw_db/images"
 TEST_NEW_IMG_DIR = "test_db/formatted_db/images"

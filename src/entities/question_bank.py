@@ -2,7 +2,7 @@ from typing import Any, Dict, Self, Set, List
 import os
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from qb.question import Question
+from entities.question import Question
 
 class QuestionBank(BaseModel):
     """

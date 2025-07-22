@@ -1,9 +1,9 @@
 import os
 
-from data_storage.database.database_interface import Database
-from data_storage.database.local_json_db import LocalJsonDB
-from qb.question_bank import QuestionBank
-from data_cleaning.img_reshaper import ImgReshaper
+from data_access.data_access_interface import Database
+from data_access.local_json_db import LocalJsonDB
+from entities.question_bank import QuestionBank
+from data_formatting.img_reshaper import ImgReshaper
 
 class DataFormatter:
     """

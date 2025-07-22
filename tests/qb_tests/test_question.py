@@ -1,5 +1,5 @@
 import pytest
-from qb.question import Question
+from entities.question import Question
 from pydantic import ValidationError
 import json
 

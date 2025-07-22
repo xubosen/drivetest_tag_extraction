@@ -4,8 +4,8 @@ import os
 import json
 from pydantic import ValidationError
 
-from qb.question_bank import QuestionBank
-from qb.question import Question
+from entities.question_bank import QuestionBank
+from entities.question import Question
 
 SAMPLE_VALID_IMG_DIR = "test_db/raw_db/images"
 

@@ -11,8 +11,8 @@ from transformers.models.siglip2.processing_siglip2 import Siglip2Processor
 from typing import Dict
 
 # Module Imports
-from qb.question import Question
-from qb.question_bank import QuestionBank
+from entities.question import Question
+from entities.question_bank import QuestionBank
 
 # Constants
 MAX_LENGTH = 64
@@ -65,7 +65,7 @@ class Siglip2QBEmbedder:
         embeddings as a dictionary mapping question IDs to their embeddings.
 
         Representation Invariant:
-        - qb is not empty
+        - entities is not empty
         """
         self._logger.info("Encoding question bank.")
 

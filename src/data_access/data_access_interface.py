@@ -1,18 +1,18 @@
-# Public interface for the database module
+# Public interface for the raw_database module
 from abc import ABC, abstractmethod
 
-from qb.question_bank import QuestionBank
+from entities.question_bank import QuestionBank
 
 
 class Database(ABC):
     """
-    A database for storing the questionbank
+    A raw_database for storing the questionbank
     """
 
     @abstractmethod
     def save(self, qb: QuestionBank) -> bool:
         """
-        Save the question bank to the database.
+        Save the question bank to the raw_database.
         :param qb:
         :return: True iff the question bank was saved successfully
         """
@@ -21,7 +21,7 @@ class Database(ABC):
     @abstractmethod
     def load(self) -> QuestionBank:
         """
-        Load a question bank from the database.
-        :return: The question bank stored in the database.
+        Load a question bank from the raw_database.
+        :return: The question bank stored in the raw_database.
         """
         raise NotImplementedError

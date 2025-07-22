@@ -6,14 +6,14 @@ import os
 import shutil
 from typing import Dict, List, Any
 
-from data_storage.database.database_interface import Database
-from qb.question_bank import QuestionBank
-from qb.question import Question
+from data_access.data_access_interface import Database
+from entities.question_bank import QuestionBank
+from entities.question import Question
 
 
 class LocalJsonDB(Database):
     """
-    A database for storing the question bank in a local JSON file.
+    A raw_database for storing the question bank in a local JSON file.
     """
     _db_file_path: str
     _img_dir: str
@@ -27,7 +27,7 @@ class LocalJsonDB(Database):
 
     def save(self, qb: QuestionBank) -> bool:
         """
-        Save the question bank to the database.
+        Save the question bank to the raw_database.
 
         :param qb: QuestionBank to save
         :return: True if save was successful, False otherwise
@@ -43,10 +43,10 @@ class LocalJsonDB(Database):
 
     def load(self) -> QuestionBank:
         """
-        Load a question bank from the database.
+        Load a question bank from the raw_database.
 
-        :return: The question bank stored in the database
-        :raises FileNotFoundError: If the database file doesn't exist
+        :return: The question bank stored in the raw_database
+        :raises FileNotFoundError: If the raw_database file doesn't exist
         """
         if not os.path.exists(self._db_file_path):
             raise FileNotFoundError(f"Database file not found: "
@@ -147,7 +147,7 @@ class LocalJsonDB(Database):
 
     def _copy_images(self, qb: QuestionBank) -> None:
         """
-        Copy images from the QuestionBank's image directory to the database
+        Copy images from the QuestionBank's image directory to the raw_database
         image directory.
 
         :param qb: QuestionBank containing images to copy
@@ -159,5 +159,5 @@ class LocalJsonDB(Database):
             new_path = self._make_img_path(question)
 
             if cur_path and os.path.exists(cur_path):
-                # Copy the image to our database image directory
+                # Copy the image to our raw_database image directory
                 shutil.copy2(cur_path, new_path)
