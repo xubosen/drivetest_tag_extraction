@@ -1,28 +1,80 @@
 from typing import Dict, Set, List
+import os
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from qb.question import Question
 
-class QuestionBank:
+class QuestionBank(BaseModel):
     """
-    A class to manage a collection of questions.
+    A Pydantic model to manage a collection of questions with validation.
     """
-    _ids: Set[str]
-    _chapters: Dict[int, str]
-    _chap_num_to_ids: Dict[int, Set[str]]
-    _id_to_q: Dict[str, Question]
-    _img_dir: str
+    img_dir: str = Field(..., min_length=1)
+    qids: Set[str] = Field(default_factory=set)
+    chapters: Dict[int, str] = Field(default_factory=dict)
+    chap_num_to_ids: Dict[int, Set[str]] = Field(default_factory=dict)
+    id_to_q: Dict[str, Question] = Field(default_factory=dict)
 
-    def __init__(self, img_dir: str):
+    @field_validator("qids")
+    @classmethod
+    def validate_qids(cls, qids: Set[str]) -> Set[str]:
         """
-        Initialize a new QuestionBank.
+        Validate that question IDs are non-empty strings.
 
-        :param img_dir: Directory path where question images are stored
+        :param qids: Set of question IDs
+        :return: Validated set of question IDs
+        :raises ValueError: If any ID is empty or not a string
         """
-        self._ids = set()
-        self._chapters = {}
-        self._chap_num_to_ids = {}
-        self._id_to_q = {}
-        self._img_dir = img_dir
+        if "" in qids:
+            raise ValueError("All question IDs must be non-empty strings")
+        return qids
+
+    @field_validator("chapters")
+    @classmethod
+    def validate_chapters(cls, chapters: Dict[int, str]) -> Dict[int, str]:
+        """
+        Validate that chapter numbers are positive integers and names are
+        non-empty strings.
+
+        :param chapters: Dictionary of chapter numbers and their descriptions
+        :return: Validated dictionary of chapters
+        :raises ValueError: If any chapter number is not a positive integer or
+        name is empty
+        """
+        for chap_num, description in chapters.items():
+            if chap_num <= 0:
+                raise ValueError(f"Chapter number must be a positive integer:"
+                                 f" {chap_num}")
+            if not description.strip():
+                raise ValueError(f"Chapter description cannot be empty for"
+                                 f" chapter {chap_num}")
+        return chapters
+
+    @field_validator("img_dir")
+    @classmethod
+    def validate_img_dir(cls, img_dir: str) -> str:
+        """
+        Validate that the image directory exists and is a directory.
+
+        :param img_dir: Path to the image directory
+        :return: Validated image directory path
+        :raises ValueError: If the directory does not exist or is not a directory
+        """
+        img_dir = img_dir.strip()
+        if not os.path.exists(img_dir) or not os.path.isdir(img_dir):
+            raise ValueError(f"Image directory does not exist or is not a "
+                             f"directory: {img_dir}")
+        return img_dir
+
+    @model_validator(mode='after')
+    def validate_chapter_consistency(self):
+        if not self.chap_num_to_ids.keys() == self.chapters.keys():
+            raise ValueError("Chapter numbers must match")
+        for qid in self.qids:
+            count = sum(
+                1 for ids in self.chap_num_to_ids.values() if qid in ids)
+            if count != 1:
+                raise ValueError(
+                    f"Question {qid} must belong to exactly one chapter")
 
     def add_chapter(self, chapter_num: int, description: str):
         """
@@ -32,11 +84,10 @@ class QuestionBank:
         :param description: Description of the chapter content
         :raises ValueError: If the chapter number already exists
         """
-        if chapter_num not in self._chapters:
-            self._chapters[chapter_num] = description
-            self._chap_num_to_ids[chapter_num] = set()
-        else:
-            raise ValueError(f"Chapter {chapter_num} already exists")
+        if chapter_num not in self.chapters:
+            self.chapters[chapter_num] = description
+            self.chap_num_to_ids[chapter_num] = set()
+        self.validate_chapters(self.chapters)
 
     def add_question(self, question: Question, chapter_num: int):
         """
@@ -46,9 +97,12 @@ class QuestionBank:
         :param chapter_num: The chapter number to associate with this question
         :raises KeyError: If the chapter number does not exist
         """
-        self._ids.add(question.get_qid())
-        self._chap_num_to_ids[chapter_num].add(question.get_qid())
-        self._id_to_q[question.get_qid()] = question
+        if chapter_num not in self.chapters:
+            raise KeyError(f"Chapter {chapter_num} does not exist")
+
+        self.qids.add(question.get_qid())
+        self.chap_num_to_ids[chapter_num].add(question.get_qid())
+        self.id_to_q[question.get_qid()] = question
 
     def get_question(self, q_id: str) -> Question:
         """
@@ -58,8 +112,8 @@ class QuestionBank:
         :return: The Question object
         :raises LookupError: If the question ID is not found
         """
-        if q_id in self._ids:
-            return self._id_to_q[q_id]
+        if q_id in self.qids:
+            return self.id_to_q[q_id]
         else:
             raise LookupError(f"Question {q_id} not found")
 
@@ -71,8 +125,8 @@ class QuestionBank:
         :return: A set of question IDs
         :raises LookupError: If the chapter number is not found
         """
-        if chap_num in self._chapters.keys():
-            return self._chap_num_to_ids[chap_num]
+        if chap_num in self.chapters.keys():
+            return self.chap_num_to_ids[chap_num].copy()
         else:
             raise LookupError(f"Chapter {chap_num} not found")
 
@@ -84,8 +138,8 @@ class QuestionBank:
         :return: The chapter description
         :raises LookupError: If the chapter number is not found
         """
-        if chap_num in self._chapters.keys():
-            return self._chapters[chap_num]
+        if chap_num in self.chapters.keys():
+            return self.chapters[chap_num]
         else:
             raise LookupError(f"Chapter {chap_num} not found")
 
@@ -95,26 +149,24 @@ class QuestionBank:
 
         :return: Path to the image directory
         """
-        return self._img_dir
+        return self.img_dir
 
     def set_img_dir(self, img_dir: str):
-        """
-        Set the image directory
-        """
-        self._img_dir = img_dir.strip()
+        """Set the image directory with validation"""
+        self.img_dir = img_dir.strip()
 
     def list_chapters(self) -> List[int]:
         """
         Return an ordered list of chapter numbers
         :return: An ordered list of chapter numbers
         """
-        return sorted(self._chapters.keys())
+        return sorted(self.chapters.keys())
 
     def get_qid_list(self) -> List[str]:
         """
         Return an ordered list of question ids
         """
-        return sorted(self._ids)
+        return sorted(self.qids)
 
     def question_count(self, chapter_num: int = None) -> int:
         """
@@ -123,7 +175,10 @@ class QuestionBank:
         :param chapter_num: Optional chapter to count questions from
         :return: Number of questions
         """
-        if chapter_num is None:
-            return len(self._ids)
-        else:
-            return len(self._chap_num_to_ids[chapter_num])
+        return len(self.qids) if chapter_num is None \
+            else len(self.chap_num_to_ids[chapter_num])
+
+    class Config:
+        """Pydantic configuration."""
+        validate_assignment = True
+        extra = 'forbid'

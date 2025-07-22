@@ -8,9 +8,9 @@ class Question(BaseModel):
     """
     qid: str = Field(..., min_length=1,
                      description="Unique identifier for the question")
-    chapter: Tuple[int, str] = Field(default=(0, ""),
-                                     description="Chapter information as "
-                                                 "(number, name)")
+    chapter: None | Tuple[int, str] = Field(default=None,
+                                            description="Chapter information as"
+                                                        " (number, name)")
     question: str = Field(..., min_length=1,
                           description="The text of the question")
     img_path: str | None = Field(default=None,
@@ -30,12 +30,13 @@ class Question(BaseModel):
 
     @field_validator("chapter", mode="after")
     @classmethod
-    def validate_class(cls, chapter: Tuple[int, str]) -> Tuple[int, str]:
+    def validate_class(cls, chapter: None | Tuple[int, str]) -> Tuple[int, str]:
         """Validate that chapter is a tuple of (int, str)."""
-        if chapter[0] <= 0:
-            raise ValueError("Chapter number must be a positive integer")
-        if not chapter[1].strip():
-            raise ValueError("Chapter name must be a non-empty string")
+        if chapter is not None:
+            if chapter[0] <= 0:
+                raise ValueError("Chapter number must be a positive integer")
+            if not chapter[1].strip():
+                raise ValueError("Chapter name must be a non-empty string")
         return chapter
 
     @field_validator("img_path")
