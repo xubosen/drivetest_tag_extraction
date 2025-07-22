@@ -168,55 +168,168 @@ class TestQuestionGetters:
 
     def test_get_qid(self):
         """Test that get_qid returns the correct question ID."""
-        pass
+        question = Question(
+            qid="test_id_123",
+            question="What is the speed limit?",
+            answers={"50 km/h", "60 km/h"},
+            correct_answer="50 km/h"
+        )
+        assert question.get_qid() == "test_id_123"
 
     def test_get_question(self):
         """Test that get_question returns the correct question text."""
-        pass
+        question_text = "When should you use your turn signal?"
+        question = Question(
+            qid="q1",
+            question=question_text,
+            answers={"Always", "Sometimes", "Never"},
+            correct_answer="Always"
+        )
+        assert question.get_question() == question_text
 
     def test_get_answers(self):
         """Test that get_answers returns the correct set of answers."""
-        pass
+        answers = {"Option A", "Option B", "Option C", "Option D"}
+        question = Question(
+            qid="q1",
+            question="Test question?",
+            answers=answers,
+            correct_answer="Option A"
+        )
+        assert question.get_answers() == answers
 
     def test_get_answers_returns_copy(self):
         """Test that get_answers returns a copy, not the original set."""
-        pass
+        original_answers = {"Answer 1", "Answer 2", "Answer 3"}
+        question = Question(
+            qid="q1",
+            question="Test question?",
+            answers=original_answers,
+            correct_answer="Answer 1"
+        )
+        returned_answers = question.get_answers()
+
+        # Modify the returned set
+        returned_answers.add("New Answer")
+
+        # Original should remain unchanged
+        assert question.get_answers() == original_answers
+        assert "New Answer" not in question.get_answers()
 
     def test_get_correct_answer(self):
         """Test that get_correct_answer returns the correct answer."""
-        pass
+        correct_answer = "The correct option"
+        question = Question(
+            qid="q1",
+            question="Test question?",
+            answers={correct_answer, "Wrong option"},
+            correct_answer=correct_answer
+        )
+        assert question.get_correct_answer() == correct_answer
 
     def test_get_chapter(self):
         """Test that get_chapter returns the correct chapter tuple."""
-        pass
+        chapter_info = (5, "Traffic Signs")
+        question = Question(
+            qid="q1",
+            chapter=chapter_info,
+            question="What does this sign mean?",
+            answers={"Stop", "Yield", "Go"},
+            correct_answer="Stop"
+        )
+        assert question.get_chapter() == chapter_info
 
     def test_get_chapter_default(self):
         """Test that get_chapter returns default (0, '') when not set."""
-        pass
+        question = Question(
+            qid="q1",
+            question="Test question?",
+            answers={"A", "B"},
+            correct_answer="A"
+        )
+        assert question.get_chapter() == (0, "")
 
     def test_get_tags(self):
         """Test that get_tags returns the correct list of tags."""
-        pass
+        tags = ["safety", "traffic", "rules"]
+        question = Question(
+            qid="q1",
+            question="Test question?",
+            answers={"A", "B"},
+            correct_answer="A",
+            tags=tags
+        )
+        assert question.get_tags() == tags
 
     def test_get_tags_returns_copy(self):
         """Test that get_tags returns a copy, not the original list."""
-        pass
+        original_tags = ["tag1", "tag2", "tag3"]
+        question = Question(
+            qid="q1",
+            question="Test question?",
+            answers={"A", "B"},
+            correct_answer="A",
+            tags=original_tags
+        )
+        returned_tags = question.get_tags()
+
+        # Modify the returned list
+        returned_tags.append("new_tag")
+
+        # Original should remain unchanged
+        assert question.get_tags() == original_tags
+        assert "new_tag" not in question.get_tags()
 
     def test_get_tags_empty_list(self):
         """Test that get_tags returns empty list when no tags are set."""
-        pass
+        question = Question(
+            qid="q1",
+            question="Test question?",
+            answers={"A", "B"},
+            correct_answer="A"
+        )
+        assert question.get_tags() == []
 
     def test_get_keywords(self):
         """Test that get_keywords returns the correct list of keywords."""
-        pass
+        keywords = ["speed", "limit", "highway"]
+        question = Question(
+            qid="q1",
+            question="Test question?",
+            answers={"A", "B"},
+            correct_answer="A",
+            keywords=keywords
+        )
+        assert question.get_keywords() == keywords
 
     def test_get_keywords_returns_copy(self):
         """Test that get_keywords returns a copy, not the original list."""
-        pass
+        original_keywords = ["keyword1", "keyword2", "keyword3"]
+        question = Question(
+            qid="q1",
+            question="Test question?",
+            answers={"A", "B"},
+            correct_answer="A",
+            keywords=original_keywords
+        )
+        returned_keywords = question.get_keywords()
+
+        # Modify the returned list
+        returned_keywords.append("new_keyword")
+
+        # Original should remain unchanged
+        assert question.get_keywords() == original_keywords
+        assert "new_keyword" not in question.get_keywords()
 
     def test_get_keywords_empty_list(self):
         """Test that get_keywords returns empty list when no keywords are set."""
-        pass
+        question = Question(
+            qid="q1",
+            question="Test question?",
+            answers={"A", "B"},
+            correct_answer="A"
+        )
+        assert question.get_keywords() == []
 
 
 class TestImageMethods:
@@ -322,8 +435,8 @@ class TestTagMethods:
         """Test that add_tag raises ValueError for whitespace-only string."""
         pass
 
-    def test_add_tag_allows_duplicates(self):
-        """Test that add_tag allows duplicate tags."""
+    def test_add_tag_duplicates(self):
+        """Test that add_tag does not allow duplicate tags."""
         pass
 
 
