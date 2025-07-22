@@ -1,5 +1,5 @@
-# Database that stores text data in a local JSON file and image data in a local
-# directory with addresses stored in the aforementioned JSON file
+# Data access object for saving and loading QuestionBank objects from a local
+# json file.
 
 import json
 import os
@@ -13,7 +13,7 @@ from entities.question import Question
 
 class LocalJsonDB(Database):
     """
-    A raw_database for storing the question bank in a local JSON file.
+    A data access object for storing the question bank in a local JSON file.
     """
     _db_file_path: str
     _img_dir: str
@@ -27,7 +27,7 @@ class LocalJsonDB(Database):
 
     def save(self, qb: QuestionBank) -> bool:
         """
-        Save the question bank to the raw_database.
+        Save the question bank.
 
         :param qb: QuestionBank to save
         :return: True if save was successful, False otherwise
@@ -43,10 +43,10 @@ class LocalJsonDB(Database):
 
     def load(self) -> QuestionBank:
         """
-        Load a question bank from the raw_database.
+        Load a question bank from the path specified.
 
-        :return: The question bank stored in the raw_database
-        :raises FileNotFoundError: If the raw_database file doesn't exist
+        :return: The question bank stored at the file path.
+        :raises FileNotFoundError: If the file doesn't exist
         """
         if not os.path.exists(self._db_file_path):
             raise FileNotFoundError(f"Database file not found: "
@@ -94,7 +94,8 @@ class LocalJsonDB(Database):
     def _make_img_path(self, question) -> str:
         if question.get_img_path() is None:
             return ""
-        return self._img_dir + "/" + question.get_qid() + ".webp"
+        extension = question.get_img_path().split(".")[-1]
+        return f"{self._img_dir}/{question.get_qid()}.{extension}"
 
     def _deserialize_question_bank(self, data: Dict[str, Any]) -> QuestionBank:
         """
@@ -103,7 +104,7 @@ class LocalJsonDB(Database):
         :param data: Dictionary containing serialized QuestionBank data
         :return: Reconstructed QuestionBank
         """
-        qb = QuestionBank(self._img_dir)
+        qb = QuestionBank(img_dir=self._img_dir)
         if not data.get("chapters"):
             return qb # Database is empty, return empty QuestionBank
         self._add_chapters(data, qb)
@@ -147,8 +148,8 @@ class LocalJsonDB(Database):
 
     def _copy_images(self, qb: QuestionBank) -> None:
         """
-        Copy images from the QuestionBank's image directory to the raw_database
-        image directory.
+        Copy images from the QuestionBank's image directory to the current
+        database's image directory.
 
         :param qb: QuestionBank containing images to copy
         """
@@ -159,5 +160,5 @@ class LocalJsonDB(Database):
             new_path = self._make_img_path(question)
 
             if cur_path and os.path.exists(cur_path):
-                # Copy the image to our raw_database image directory
+                # Copy the image to our image directory
                 shutil.copy2(cur_path, new_path)

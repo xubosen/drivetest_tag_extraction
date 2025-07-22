@@ -1,4 +1,4 @@
-# Public interface for the raw_database module
+# Generic interface for interacting with data storage systems.
 from abc import ABC, abstractmethod
 
 from entities.question_bank import QuestionBank
