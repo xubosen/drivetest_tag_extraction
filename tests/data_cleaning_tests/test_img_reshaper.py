@@ -8,15 +8,15 @@ import os
 # Local Imports
 from data_cleaning.img_reshaper import ImgReshaper
 
-TEST_IMG_DIR = "test_db/img"
-TEST_NEW_IMG_DIR = "test_db/new_img"
-VALID_IMG_NAMES = ["331x653",
-                   "500x249",
-                   "500x250",
-                   "663x399",
-                   "900x450",
-                   "900x900"]
-
+TEST_IMG_DIR = "test_db/raw_db/images"
+TEST_NEW_IMG_DIR = "test_db/formatted_db/images"
+IMG_DIM_TO_ID = {(900,450) : "0a1e1.webp",
+                 (900, 448) : "0b5ae.webp",
+                 (900, 900) : "0b15e.webp",
+                 (500, 249) : "0bb47.webp",
+                 (500, 250) : "0beac.webp",
+                 (331, 653) : "0c80a.webp",
+                 (663,399) : "0c708.webp"}
 
 def _load_image(img_path) -> Image:
     """

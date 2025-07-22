@@ -13,7 +13,7 @@ from transformers.models.siglip2.processing_siglip2 import Siglip2Processor
 # Local Imports
 from qb.question_bank import QuestionBank
 from qb.question import Question
-from embedder.siglip2_qb_embedder import Siglip2QBEmbedder, format_question
+from label_clustering.embedder.siglip2_qb_embedder import Siglip2QBEmbedder, format_question
 from data_storage.database.json_database import LocalJsonDB
 
 # Constants for testing
