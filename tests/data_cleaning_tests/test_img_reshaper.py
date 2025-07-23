@@ -8,15 +8,17 @@ import os
 # Local Imports
 from data_formatting.img_reshaper import ImgReshaper
 
+PADDING_COLOR = (127, 127, 127)
+
 TEST_IMG_DIR = "test_db/raw_db/images"
 TEST_NEW_IMG_DIR = "test_db/formatted_db/images"
-IMG_DIM_TO_ID = {(900,450) : "0a1e1.webp",
-                 (900, 448) : "0b5ae.webp",
-                 (900, 900) : "0b15e.webp",
-                 (500, 249) : "0bb47.webp",
-                 (500, 250) : "0beac.webp",
-                 (331, 653) : "0c80a.webp",
-                 (663,399) : "0c708.webp"}
+IMG_DIM_TO_ID = {(900,450) : "0a1e1",
+                 (900, 448) : "0b5ae",
+                 (900, 900) : "0b15e",
+                 (500, 249) : "0bb47",
+                 (500, 250) : "0beac",
+                 (331, 653) : "0c80a",
+                 (663,399) : "0c708"}
 
 def _load_image(img_path) -> Image:
     """
@@ -41,117 +43,72 @@ class TestImgReshaperInit:
 
 class TestReshape:
     """Tests for the reshape method."""
-
     def test_reshape_larger_image(self):
         """Test reshaping an image larger than the target size."""
-        # Create directories if they don't exist
         os.makedirs(TEST_NEW_IMG_DIR, exist_ok=True)
+        reshaper = ImgReshaper((400, 300))
+        img_name = IMG_DIM_TO_ID[(900, 900)]
 
-        # Create a reshaper with a target size smaller than the image
-        target_size = (400, 300)
-        reshaper = ImgReshaper(target_size)
-
-        # Use a large image from VALID_IMG_NAMES - 900x900
-        img_name = "900x900"
-
-        # Reshape the image
+        # Verify that the paths are correct
         output_path = reshaper.reshape(img_name, TEST_IMG_DIR, TEST_NEW_IMG_DIR)
-
-        # Verify the returned path is correct
         expected_path = os.path.join(TEST_NEW_IMG_DIR, f"{img_name}.jpg")
         assert output_path == expected_path
-
-        # Verify the output file exists
         assert os.path.exists(output_path)
 
         # Load the output image and verify its properties
         output_img = _load_image(output_path)
+        assert output_img.size == (400, 300)
 
-        # The output image should be exactly the target size
-        assert output_img.size == target_size
-
-        # Clean up
         os.remove(output_path)
 
     def test_reshape_smaller_image(self):
         """Test reshaping an image smaller than target size."""
-        # Create directories if they don't exist
         os.makedirs(TEST_NEW_IMG_DIR, exist_ok=True)
 
-        # Create a reshaper with target size larger than the image
-        target_size = (800, 600)
-        reshaper = ImgReshaper(target_size)
+        reshaper = ImgReshaper((800, 600))
+        img_name = IMG_DIM_TO_ID[(331, 653)]
 
-        # Use a small image from VALID_IMG_NAMES - 331x653
-        img_name = "331x653"
-
-        # Reshape the image
+        # Reshape the image and check that the paths match
         output_path = reshaper.reshape(img_name, TEST_IMG_DIR, TEST_NEW_IMG_DIR)
-
-        # Verify the returned path is correct
         expected_path = os.path.join(TEST_NEW_IMG_DIR, f"{img_name}.jpg")
         assert output_path == expected_path
 
-        # Verify the output file exists
         assert os.path.exists(output_path)
-
-        # Load the output image and verify its properties
         output_img = _load_image(output_path)
+        assert output_img.size == (800, 600)
 
-        # The output image should be exactly the target size
-        assert output_img.size == target_size
+        # Check border pixels to verify they're padded correctly
+        assert output_img.getpixel((0, 0)) == PADDING_COLOR  # Top-left
+        assert output_img.getpixel((799, 0)) == PADDING_COLOR  # Top-right
+        assert output_img.getpixel((0, 599)) == PADDING_COLOR  # Bottom-left
+        assert output_img.getpixel((799, 599)) == PADDING_COLOR  # Bottom-right
 
-        # Check border pixels to verify they're white (padding)
-        assert output_img.getpixel((0, 0)) == (255, 255, 255)  # Top-left
-        assert output_img.getpixel((799, 0)) == (255, 255, 255)  # Top-right
-        assert output_img.getpixel((0, 599)) == (255, 255, 255)  # Bottom-left
-        assert output_img.getpixel((799, 599)) == (255, 255, 255)  # Bottom-right
-
-        # Clean up
         os.remove(output_path)
 
     def test_reshape_exact_size_image(self):
         """Test reshaping an image with exact target size."""
-        # Create directories if they don't exist
         os.makedirs(TEST_NEW_IMG_DIR, exist_ok=True)
 
-        # Create a reshaper with target size matching one of the images
-        # 500x250 is one of our test images
         target_size = (500, 250)
         reshaper = ImgReshaper(target_size)
+        img_name = IMG_DIM_TO_ID[(500, 250)]
 
-        # Use an image that exactly matches the target size
-        img_name = "500x250"
-
-        # Reshape the image
+        # Reshape the image and check that the paths match
         output_path = reshaper.reshape(img_name, TEST_IMG_DIR, TEST_NEW_IMG_DIR)
-
-        # Verify the returned path is correct
         expected_path = os.path.join(TEST_NEW_IMG_DIR, f"{img_name}.jpg")
         assert output_path == expected_path
 
-        # Verify the output file exists
+        # Verify the output file
         assert os.path.exists(output_path)
-
-        # Load the output image and verify its properties
         output_img = _load_image(output_path)
-
-        # The output image should be exactly the target size
         assert output_img.size == target_size
-
-        # No downscaling or filling should have occurred
-        # So we can compare with the original image (allowing for format conversion differences)
         original_img = reshaper._fetch_img(img_name, TEST_IMG_DIR)
-
-        # Check dimensions match
         assert original_img.size == output_img.size
 
-        # Clean up
         os.remove(output_path)
 
     def test_reshape_different_aspect_ratio(self):
         """Test reshaping an image with different aspect ratio."""
-        # Create directories if they don't exist
         os.makedirs(TEST_NEW_IMG_DIR, exist_ok=True)
 
         # Create a reshaper with target size with different aspect ratio
@@ -160,7 +117,7 @@ class TestReshape:
         reshaper = ImgReshaper(target_size)
 
         # Use an image with a different aspect ratio
-        img_name = "900x450"  # This has a 2:1 aspect ratio
+        img_name = IMG_DIM_TO_ID[(900, 450)] # This has a 2:1 aspect ratio
 
         # Reshape the image
         output_path = reshaper.reshape(img_name, TEST_IMG_DIR, TEST_NEW_IMG_DIR)
@@ -188,8 +145,8 @@ class TestReshape:
 
         # Check some border pixels to verify padding
         # Top and bottom should have white pixels (padding)
-        assert output_img.getpixel((200, 0)) == (255, 255, 255)  # Top center
-        assert output_img.getpixel((200, 299)) == (255, 255, 255)  # Bottom center
+        assert output_img.getpixel((200, 0)) == PADDING_COLOR  # Top center
+        assert output_img.getpixel((200, 299)) == PADDING_COLOR  # Bottom center
 
         # Clean up
         os.remove(output_path)
@@ -203,7 +160,7 @@ class TestFetchImg:
         reshaper = ImgReshaper((400, 300))
 
         # Load a valid image from the test directory
-        img_name = VALID_IMG_NAMES[0]
+        img_name = IMG_DIM_TO_ID[(900, 450)]
         img_path = os.path.join(TEST_IMG_DIR, f"{img_name}.webp")
         target_img = _load_image(img_path)
         fetched_img = reshaper._fetch_img(img_name, TEST_IMG_DIR)
@@ -369,10 +326,10 @@ class TestFillImg:
         assert filled_img.size == (400, 300)
 
         # Verify the image is centered - check corner pixels are white
-        assert filled_img.getpixel((0, 0)) == (255, 255, 255)  # Top-left
-        assert filled_img.getpixel((399, 0)) == (255, 255, 255)  # Top-right
-        assert filled_img.getpixel((0, 299)) == (255, 255, 255)  # Bottom-left
-        assert filled_img.getpixel((399, 299)) == (255, 255, 255)  # Bottom-right
+        assert filled_img.getpixel((0, 0)) == PADDING_COLOR  # Top-left
+        assert filled_img.getpixel((399, 0)) == PADDING_COLOR  # Top-right
+        assert filled_img.getpixel((0, 299)) == PADDING_COLOR  # Bottom-left
+        assert filled_img.getpixel((399, 299)) == PADDING_COLOR  # Bottom-right
 
         # Calculate where the original image should be placed
         paste_x = (400 - 200) // 2  # = 100
@@ -430,33 +387,18 @@ class TestIsLarger:
 
     def test_larger_height_only(self):
         """Test detection of image larger in height only."""
-        # Create a reshaper with target size (400, 300)
         reshaper = ImgReshaper((400, 300))
-
-        # Create an image larger in height only (300, 400)
         img = Image.new('RGB', (300, 400))
-
-        # Test the _is_larger method
         assert reshaper._is_larger(img) is True
 
     def test_smaller_image(self):
         """Test detection of image smaller in both dimensions."""
-        # Create a reshaper with target size (400, 300)
         reshaper = ImgReshaper((400, 300))
-
-        # Create an image smaller in both dimensions (300, 200)
         img = Image.new('RGB', (300, 200))
-
-        # Test the _is_larger method
         assert reshaper._is_larger(img) is False
 
     def test_exact_size_image(self):
         """Test detection of image with exact target size."""
-        # Create a reshaper with target size (400, 300)
         reshaper = ImgReshaper((400, 300))
-
-        # Create an image with exact target size (400, 300)
         img = Image.new('RGB', (400, 300))
-
-        # Test the _is_larger method
         assert reshaper._is_larger(img) is False
