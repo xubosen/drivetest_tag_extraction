@@ -22,8 +22,9 @@ class ImgReshaper:
         height
         - target_size is a valid size for reshaping images (positive integers)
         """
-        self._buffer_image = Image.new('RGB', self._size, BUFFER_COLOR)
         self._size = target_size
+        self._buffer_image = Image.new('RGB', self._size, BUFFER_COLOR)
+
 
     def reshape(self,
                 img_name: str,
@@ -54,7 +55,8 @@ class ImgReshaper:
                               new_directory=output_directory,
                               output_extension=output_extension)
 
-    def _fetch_img(self, img_name: str, cur_dir: str, input_extension: str) -> Image:
+    def _fetch_img(self, img_name: str, cur_dir: str, input_extension: str) \
+            -> Image:
         """
         Fetch the image from the current directory and return it as a PIL Image
         object.
@@ -66,7 +68,7 @@ class ImgReshaper:
         img_path = os.path.join(cur_dir, f"{img_name}.{input_extension}")
         try:
             with open(img_path , 'rb') as img_file:
-                img = Image.open(img_file).load()
+                img = Image.open(img_file)
             return img
         except Exception as e:
             raise FileNotFoundError(f"Error loading image {img_name} from "
@@ -87,14 +89,15 @@ class ImgReshaper:
         - new_dir is a valid directory path
         - img_name is a valid file name for saving an image
         """
-        save_path = os.path.join(new_directory, f"{image_name}.{output_extension}")
+        save_path = os.path.join(new_directory,
+                                 f"{image_name}.{output_extension}")
 
         try:
             os.makedirs(new_directory, exist_ok=True)
             # If the output format does not support transparency, convert to RGB
             if output_extension.lower() not in ['png', 'gif']:
                 image = self._to_rgb(image)
-            image.save(save_path, output_extension)
+            image.save(save_path)
             return save_path
         except Exception as e:
             raise IOError(f"Error saving image {image_name} to {save_path}. "
