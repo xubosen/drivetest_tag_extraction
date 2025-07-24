@@ -64,7 +64,8 @@ class DataFormatter:
         self._resize_images(qb=question_bank,
                             new_img_dir=new_img_dir,
                             reshaper=ImgReshaper(
-                                target_size=self._data_format.image_shape))
+                                target_size=self._data_format.image_shape
+                            ))
         return question_bank
 
     def _resize_images(self, qb: QuestionBank, new_img_dir: str,
@@ -72,10 +73,10 @@ class DataFormatter:
         """ Resize images in the question bank and update their paths. """
         for qid in qb.get_qid_list():
             question = qb.get_question(qid)
-            if question.get_img_path() is not None:
+            if question.has_img():
                 new_path = (
                     reshaper.reshape(img_name=qid,
-                                     input_directory=question.get_img_path(),
+                                     input_directory=qb.get_img_dir(),
                                      output_directory=new_img_dir,
                                      input_extension=
                                      self._data_format.input_image_extension,
