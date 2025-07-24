@@ -3,6 +3,8 @@ from typing import Tuple
 import os
 from PIL import Image
 
+TRANSPARENT_EXT = ['png', 'gif']
+
 BUFFER_COLOR = (127, 127, 127)
 
 class ImgReshaper:
@@ -95,7 +97,7 @@ class ImgReshaper:
         try:
             os.makedirs(new_directory, exist_ok=True)
             # If the output format does not support transparency, convert to RGB
-            if output_extension.lower() not in ['png', 'gif']:
+            if output_extension.lower() not in TRANSPARENT_EXT:
                 image = self._to_rgb(image)
             image.save(save_path)
             return save_path
