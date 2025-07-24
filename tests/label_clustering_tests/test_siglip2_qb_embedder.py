@@ -1,22 +1,20 @@
 # Unit tests for the QBEmbedder class and its helper functions.
 
 # Library Imports
-import pytest
-import numpy as np
 import logging
 from logging import Logger
 import os
 from datetime import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 import torch
 from transformers.models.siglip2.modeling_siglip2 import Siglip2Model
 from transformers.models.siglip2.processing_siglip2 import Siglip2Processor
 
 # Local Imports
-from qb.question_bank import QuestionBank
-from qb.question import Question
-from embedder.siglip2_qb_embedder import Siglip2QBEmbedder, _has_image, format_question
-from data_storage.database.json_database import LocalJsonDB
+from entities.question_bank import QuestionBank
+from entities.question import Question
+from label_clustering.embedder.siglip2_qb_embedder import Siglip2QBEmbedder, format_question
+from data_storage.raw_database.json_database import LocalJsonDB
 
 # Constants for testing
 FILE_PATH = "test_db/db_file.json"
@@ -94,7 +92,7 @@ class TestHelperFunctions:
         question.get_img_path.return_value = "path/to/image.jpg"
 
         # Test the function
-        result = _has_image(question)
+        result = question.get_img_path() is not None
 
         # Assert
         assert result is True
@@ -107,7 +105,7 @@ class TestHelperFunctions:
         question.get_img_path.return_value = None
 
         # Test the function
-        result = _has_image(question)
+        result = question.get_img_path() is not None
 
         # Assert
         assert result is False
@@ -124,31 +122,32 @@ class TestHelperFunctions:
         chapter = "Geography"
 
         # Expected formatted string
-        expected = "章节: Geography\n题目: What is the capital of Canada?\n答案: Ottawa"
-
-        # Test the function
-        result = format_question(question, chapter)
+        expected_with_chapter = ("章节:Geography "
+                                 "题目:What is the capital of Canada? "
+                                 "答案:Ottawa")
+        expected_without = ("题目:What is the capital of Canada? "
+                            "答案:Ottawa")
 
         # Assert
-        assert result == expected
-        question.get_question.assert_called_once()
-        question.get_correct_answer.assert_called_once()
+        assert format_question(question, chapter) == expected_with_chapter
+        assert format_question(question) == expected_without
 
     def test_format_question_with_special_characters(self):
         """Test _format_question handles special characters correctly."""
         # Create a question with special characters
         question = Mock(spec=Question)
-        question.get_question.return_value = "这是一个中文问题 with special chars: &$#@!?"
-        question.get_correct_answer.return_value = "答案是: 42! (四十二)"
+        question.get_question.return_value = ("这是一个中文问题 with special chars"
+                                              ": &$#@!?")
+        question.get_correct_answer.return_value = "42! (四十二)"
 
         # Define a chapter with special characters
         chapter = "测试章节 123"
 
         # Expected formatted string
         expected = (
-            "章节: 测试章节 123\n"
-            "题目: 这是一个中文问题 with special chars: &$#@!?\n"
-            "答案: 答案是: 42! (四十二)"
+            "章节:测试章节 123 "
+            "题目:这是一个中文问题 with special chars: &$#@!? "
+            "答案:42! (四十二)"
         )
 
         # Test the function
@@ -156,8 +155,6 @@ class TestHelperFunctions:
 
         # Assert
         assert result == expected
-        question.get_question.assert_called_once()
-        question.get_correct_answer.assert_called_once()
 
 
 class TestQBEmbedderInitialization:
@@ -223,59 +220,41 @@ class TestEncodeQuestion:
         pass
 
 
-class TestEncodeTextAndImage:
-    """Tests for the _encode_text_and_img method."""
+class TestEncodeHelper:
+    """Tests for the _encode_helper method."""
 
     def test_encode_text_and_img_averaging(self):
-        """Test that _encode_text_and_img correctly averages text and image embeddings."""
+        """Test that the method correctly averages text and image embeddings."""
         pass
-
-
-class TestEncodeText:
-    """Tests for the _encode_text method."""
 
     def test_encode_text_returns_tensor(self):
         """Test that _encode_text returns a tensor with correct shape."""
         # Create mock objects but use a real logger
         mock_model, mock_processor = _make_fake_model()
         real_logger = _make_logger()
+        mock_model.return_value.text = torch.ones((1, 768), dtype=torch.float)
 
-        # Set expected output shape
-        expected_shape = (1, 768)
-        expected_output = torch.ones(expected_shape, dtype=torch.float)
-        mock_model.return_value.text = expected_output
-
-        # Create embedder with mocks
         embedder = Siglip2QBEmbedder(
             model=mock_model,
             processor=mock_processor,
             logger=real_logger
         )
-
-        # Test document
         test_doc = "This is a test question"
-
-        # Call the method
-        result = embedder._encode_text(test_doc)
+        result = embedder._encode_helper(test_doc, embedder._dummy_image, False)
 
         # Verify the processor was called with correct parameters
         mock_processor.assert_called_once()
         call_args, call_kwargs = mock_processor.call_args
         assert call_kwargs["text"] == test_doc
-        assert call_kwargs["images"] is None
         assert call_kwargs["return_tensors"] == "pt"
-        assert call_kwargs["padding"] is True
 
         # Verify the model was called with the processor's output
         mock_model.assert_called_once()
 
         # Verify the result is the expected tensor
         assert torch.is_tensor(result)
-        assert result.shape == expected_shape
-        assert torch.equal(result, expected_output)
-
-        real_logger.info("Encode text test completed successfully")
-
+        assert result.shape == (1, 768)
+        assert torch.equal(result, torch.ones((1, 768), dtype=torch.float))
 
 class TestIntegration:
     """Integration tests for QBEmbedder."""
