@@ -33,9 +33,9 @@
             "question": "What is the capital of France?",
             "answers": [
                 "Paris",
-                "London",
+                "Berlin",
                 "Madrid",
-                "Berlin"
+                "London"
             ],
             "correct_answer": "Paris",
             "img_path": "test_db/raw_db/images/q2.webp",
@@ -48,9 +48,9 @@
             "question": "Explain photosynthesis.",
             "answers": [
                 "Water cycle",
-                "Process by which plants make food",
                 "Animal breathing",
-                "Soil formation"
+                "Soil formation",
+                "Process by which plants make food"
             ],
             "correct_answer": "Process by which plants make food",
             "img_path": "",
