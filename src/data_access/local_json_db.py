@@ -33,6 +33,7 @@ class LocalJsonDB(Database):
         :return: True if save was successful, False otherwise
         """
         try:
+            os.makedirs(self._img_dir, exist_ok=True)
             data = self._serialize_question_bank(qb)
             self._copy_images(qb)
             with open(self._db_file_path, 'w') as f:
@@ -52,9 +53,13 @@ class LocalJsonDB(Database):
             raise FileNotFoundError(f"Database file not found: "
                                     f"{self._db_file_path}")
         try:
-            with open(self._db_file_path, 'r') as f:
-                data = json.load(f)
-            return self._deserialize_question_bank(data)
+            with open(self._db_file_path, 'r') as file:
+                if file.read().strip() == '{}':
+                    return QuestionBank(img_dir=self._img_dir)
+                else:
+                    file.seek(0)
+                    data = json.load(file)
+                    return self._deserialize_question_bank(data)
         except Exception as e:
             raise ConnectionError(f"Error loading question bank: {e}")
 
@@ -105,8 +110,6 @@ class LocalJsonDB(Database):
         :return: Reconstructed QuestionBank
         """
         qb = QuestionBank(img_dir=self._img_dir)
-        if not data.get("chapters"):
-            return qb # Database is empty, return empty QuestionBank
         self._add_chapters(data, qb)
         self._add_questions(data, qb)
         return qb
