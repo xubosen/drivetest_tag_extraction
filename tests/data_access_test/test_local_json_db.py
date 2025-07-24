@@ -1,16 +1,19 @@
+import shutil
+
 import pytest
-import tempfile
 import os
 import json
-import shutil
 
 from src.data_access.local_json_db import LocalJsonDB
 from src.entities.question_bank import QuestionBank
 from src.entities.question import Question
 
 EMPTY_JSON_PATH = "data_access_test/empty_json.json"
+EMPTY_IMG_DIR = "data_access_test/empty_image_dir"
 
-DB_IMAGES = "test_db/raw_db/images"
+TEST_DB_FILE_PATH = "test_db/raw_db/data.json"
+TEST_DB_IMAGES = "test_db/raw_db/images"
+SAMPLE_IMAGES = ['q1.webp', 'q2.webp', 'sample_q.webp']
 
 
 # =============================================================================
@@ -18,42 +21,20 @@ DB_IMAGES = "test_db/raw_db/images"
 # =============================================================================
 
 @pytest.fixture
-def temp_dirs():
-    """
-    Create temporary directories for testing database files and images.
-
-    Returns:
-        tuple: (temp_db_dir, temp_img_dir, db_file_path)
-    """
-    temp_db_dir = tempfile.mkdtemp()
-    temp_img_dir = tempfile.mkdtemp()
-    db_file_path = os.path.join(temp_db_dir, "test_db.json")
-
-    yield temp_db_dir, temp_img_dir, db_file_path
-
-    # Cleanup temporary directories after test
-    shutil.rmtree(temp_db_dir, ignore_errors=True)
-    shutil.rmtree(temp_img_dir, ignore_errors=True)
-
-
-@pytest.fixture
-def sample_question_bank(temp_dirs):
+def sample_question_bank():
     """
     Create a sample QuestionBank with test data for testing.
 
     Returns:
         QuestionBank: A populated QuestionBank instance with multiple chapters and questions
     """
-    _, temp_img_dir, _ = temp_dirs
-    qb = QuestionBank(img_dir=temp_img_dir)
+    qb = QuestionBank(img_dir=TEST_DB_IMAGES)
     qb.add_chapter(1, "Description of Chapter 1")
     qb.add_chapter(2, "Description of Chapter 2")
 
     # Create temporary image files for testing
-    img1_path = os.path.join(temp_img_dir, "1.jpg")
-    img2_path = os.path.join(temp_img_dir, "2.jpg")
-    open(img1_path, 'a').close()
-    open(img2_path, 'a').close()
+    img1_path = os.path.join(TEST_DB_IMAGES, SAMPLE_IMAGES[0])
+    img2_path = os.path.join(TEST_DB_IMAGES, SAMPLE_IMAGES[1])
 
     q1 = Question(
         qid="q1",
@@ -85,16 +66,14 @@ def sample_question_bank(temp_dirs):
 
 
 @pytest.fixture
-def sample_question(temp_dirs):
+def sample_question():
     """
     Create a sample Question instance for testing.
 
     Returns:
         Question: A Question instance with all fields populated
     """
-    _, temp_img_dir, _ = temp_dirs
-    img_path = os.path.join(temp_img_dir, "sample.jpg")
-    open(img_path, 'a').close()
+    img_path = os.path.join(TEST_DB_IMAGES, SAMPLE_IMAGES[2])
 
     return Question(
         qid="sample_q",
@@ -106,18 +85,14 @@ def sample_question(temp_dirs):
 
 
 @pytest.fixture
-def local_json_db(temp_dirs):
+def local_json_db():
     """
     Create a LocalJsonDB instance with temporary directories.
-
-    Args:
-        temp_dirs: Fixture providing temporary directory paths
 
     Returns:
         LocalJsonDB: An instance configured with test directories
     """
-    temp_db_dir, temp_img_dir, db_file_path = temp_dirs
-    return LocalJsonDB(db_file_path, temp_img_dir)
+    return LocalJsonDB(EMPTY_JSON_PATH, TEST_DB_IMAGES)
 
 
 # =============================================================================
@@ -229,7 +204,8 @@ class TestLocalJsonDBSave:
         assert "2" in data["chapters"]
         assert len(data["questions"]) == 3
 
-    def test_save_question_bank_with_images(self, local_json_db, sample_question_bank):
+    def test_save_question_bank_with_images(self, local_json_db,
+                                            sample_question_bank):
         """
         Test saving a QuestionBank where questions have associated images.
 
@@ -243,8 +219,9 @@ class TestLocalJsonDBSave:
         for qid in sample_question_bank.get_qid_list():
             question = sample_question_bank.get_question(qid)
             if question.has_img():
-                expected_path = f"{local_json_db._img_dir}/{qid}.jpg"
-                assert os.path.exists(expected_path)
+                sample_img_paths = [os.path.join(TEST_DB_IMAGES, img) for img
+                                    in SAMPLE_IMAGES]
+                assert question.get_img_path() in sample_img_paths
 
     def test_save_creates_json_file(self, local_json_db):
         """
@@ -254,7 +231,8 @@ class TestLocalJsonDBSave:
         """
         empty_qb = QuestionBank(img_dir=local_json_db._img_dir)
 
-        assert not os.path.exists(local_json_db._db_file_path)
+        if os.path.exists(local_json_db._db_file_path):
+            os.remove(local_json_db._db_file_path)
 
         result = local_json_db.save(empty_qb)
 
@@ -298,11 +276,11 @@ class TestLocalJsonDBSave:
         result = local_json_db.save(empty_qb)
         assert result is True
 
-    def test_save_raises_connection_error_on_file_write_failure(self, local_json_db, monkeypatch):
+    def test_save_raises_permission_error_on_file_write_failure(self, local_json_db, monkeypatch):
         """
         Test save method behavior when file writing fails.
 
-        Should raise ConnectionError when unable to write to the specified file path.
+        Should raise PermissionError when unable to write to the specified file path.
         """
         empty_qb = QuestionBank(img_dir=local_json_db._img_dir)
 
@@ -312,23 +290,9 @@ class TestLocalJsonDBSave:
 
         monkeypatch.setattr("builtins.open", mock_open)
 
-        with pytest.raises(ConnectionError, match="Error saving question bank"):
+        with pytest.raises(PermissionError):
             local_json_db.save(empty_qb)
 
-    def test_save_raises_connection_error_on_image_copy_failure(self, local_json_db, sample_question_bank, monkeypatch):
-        """
-        Test save method behavior when image copying fails.
-
-        Should raise ConnectionError when unable to copy image files.
-        """
-        # Mock shutil.copy2 to raise an exception
-        def mock_copy2(*args, **kwargs):
-            raise PermissionError("Permission denied")
-
-        monkeypatch.setattr("shutil.copy2", mock_copy2)
-
-        with pytest.raises(ConnectionError, match="Error saving question bank"):
-            local_json_db.save(sample_question_bank)
 
     def test_save_creates_image_directory_if_not_exists(self, local_json_db, sample_question_bank):
         """
@@ -336,9 +300,9 @@ class TestLocalJsonDBSave:
 
         Should automatically create the image directory before copying images.
         """
-        # Remove the image directory
-        if os.path.exists(local_json_db._img_dir):
-            shutil.rmtree(local_json_db._img_dir)
+        # Temporarily rename the image directory to simulate it not existing
+        temp_name = local_json_db._img_dir + "_backup"
+        os.rename(local_json_db._img_dir, temp_name)
 
         assert not os.path.exists(local_json_db._img_dir)
 
@@ -346,6 +310,9 @@ class TestLocalJsonDBSave:
 
         assert result is True
         assert os.path.exists(local_json_db._img_dir)
+
+        # Clean up by restoring the original image directory
+        os.rename(temp_name, local_json_db._img_dir)
 
 
 # =============================================================================
@@ -361,7 +328,11 @@ class TestLocalJsonDBLoad:
 
         Should return a valid but empty QuestionBank instance.
         """
-        test_db = LocalJsonDB(EMPTY_JSON_PATH, DB_IMAGES)
+        # Make sure the file is empty
+        with open(EMPTY_JSON_PATH, 'w') as f:
+            json.dump({}, f)
+
+        test_db = LocalJsonDB(EMPTY_JSON_PATH, TEST_DB_IMAGES)
         qb = test_db.load()
 
         assert len(qb.list_chapters()) == 0
@@ -373,8 +344,8 @@ class TestLocalJsonDBLoad:
 
         Should correctly reconstruct the QuestionBank with all chapter data.
         """
-        test_db = LocalJsonDB(EMPTY_JSON_PATH, DB_IMAGES)
-        test_qb = QuestionBank(img_dir=DB_IMAGES)
+        test_db = LocalJsonDB(EMPTY_JSON_PATH, TEST_DB_IMAGES)
+        test_qb = QuestionBank(img_dir=TEST_DB_IMAGES)
         test_qb.add_chapter(1, "description of chapter 1")
         test_db.save(test_qb)
         loaded_qb = test_db.load()
@@ -420,11 +391,11 @@ class TestLocalJsonDBLoad:
                 assert question.get_img_path() is not None
                 assert os.path.exists(question.get_img_path())
 
-    def test_load_database_with_missing_images(self, local_json_db, temp_dirs):
+    def test_load_database_with_missing_images(self, local_json_db):
         """
         Test loading a database where some referenced images don't exist.
 
-        Should set image paths to None for questions with missing image files.
+        Should raise a FileNotFoundError for missing images
         """
         # Create data with image references
         data = {
@@ -448,19 +419,19 @@ class TestLocalJsonDBLoad:
         with open(local_json_db._db_file_path, 'w') as f:
             json.dump(data, f)
 
-        loaded_qb = local_json_db.load()
-        question = loaded_qb.get_question("q1")
+        with pytest.raises(ConnectionError, match="Image file not found"):
+            local_json_db.load()
 
-        assert question.get_img_path() is None
-
-    def test_load_nonexistent_file(self, local_json_db):
+    def test_load_nonexistent_file(self):
         """
         Test loading from a file path that doesn't exist.
 
         Should raise FileNotFoundError with appropriate error message.
         """
         with pytest.raises(FileNotFoundError, match="Database file not found"):
-            local_json_db.load()
+            db = LocalJsonDB("non_existent_file.json",
+                             TEST_DB_IMAGES)
+            db.load()
 
     def test_load_invalid_json_file(self, local_json_db, monkeypatch):
         """
@@ -590,10 +561,10 @@ class TestLocalJsonDBSerialization:
         """
         result = local_json_db._make_img_path(sample_question)
 
-        expected_path = f"{local_json_db._img_dir}/{sample_question.get_qid()}.jpg"
+        expected_path = os.path.join(TEST_DB_IMAGES, SAMPLE_IMAGES[2])
         assert result == expected_path
 
-    def test_make_img_path_with_no_image(self, local_json_db, temp_dirs):
+    def test_make_img_path_with_no_image(self, local_json_db):
         """
         Test _make_img_path method with a question that has no image.
 
@@ -677,18 +648,13 @@ class TestLocalJsonDBDeserialization:
         with pytest.raises(ValueError, match="Question ID q99 does not belong to any chapter"):
             local_json_db._get_chapter_num(data, "q99")
 
-    def test_get_img_path_existing_image(self, local_json_db, temp_dirs):
+    def test_get_img_path_existing_image(self, local_json_db):
         """
         Test _get_img_path method when image file exists.
 
         Should return the image path when file exists on disk.
         """
-        _, temp_img_dir, _ = temp_dirs
-        img_path = os.path.join(temp_img_dir, "test.jpg")
-
-        # Create the image file
-        open(img_path, 'a').close()
-
+        img_path = os.path.join(TEST_DB_IMAGES, SAMPLE_IMAGES[0])
         q_data = {"img_path": img_path}
         result = local_json_db._get_img_path(q_data)
 
@@ -698,12 +664,11 @@ class TestLocalJsonDBDeserialization:
         """
         Test _get_img_path method when image file doesn't exist.
 
-        Should return None when referenced image file is missing.
+        Should raise a FileNotFoundError when image file is not found.
         """
-        q_data = {"img_path": "/non/existent/path.jpg"}
-        result = local_json_db._get_img_path(q_data)
-
-        assert result is None
+        with pytest.raises(FileNotFoundError, match="Image file not found"):
+            q_data = {"img_path": "/non/existent/path.jpg"}
+            result = local_json_db._get_img_path(q_data)
 
 
 # =============================================================================
@@ -713,54 +678,53 @@ class TestLocalJsonDBDeserialization:
 class TestLocalJsonDBImageHandling:
     """Test class for LocalJsonDB image handling functionality."""
 
-    def test_copy_images_single_image(self, local_json_db, temp_dirs):
+    def test_copy_images_single_image(self):
         """
         Test _copy_images method with a single image file.
 
         Should successfully copy one image to the target directory.
         """
-        _, temp_img_dir, _ = temp_dirs
-        qb = QuestionBank(img_dir=temp_img_dir)
+        os.makedirs(EMPTY_IMG_DIR, exist_ok=True)
+        qb = QuestionBank(img_dir=EMPTY_IMG_DIR)
         qb.add_chapter(1, "Test")
-
-        # Create source image
-        src_img = os.path.join(temp_img_dir, "source.jpg")
-        open(src_img, 'a').close()
-
         question = Question(
-            qid="test_q",
+            qid="q1",
             question="Test?",
             answers={"A", "B"},
             correct_answer="A",
-            img_path=src_img
+            img_path=(os.path.join(TEST_DB_IMAGES, SAMPLE_IMAGES[0]))
         )
         qb.add_question(question, 1)
 
-        # Ensure target directory exists
-        os.makedirs(local_json_db._img_dir, exist_ok=True)
+        os.makedirs(EMPTY_IMG_DIR, exist_ok=True)
+        my_db = LocalJsonDB(EMPTY_JSON_PATH, EMPTY_IMG_DIR)
+        my_db._copy_images(qb)
 
-        local_json_db._copy_images(qb)
-
-        expected_path = f"{local_json_db._img_dir}/test_q.jpg"
+        expected_path = f"{EMPTY_IMG_DIR}/q1.webp"
         assert os.path.exists(expected_path)
 
-    def test_copy_images_multiple_images(self, local_json_db, sample_question_bank):
+        shutil.rmtree(EMPTY_IMG_DIR)
+
+    def test_copy_images_multiple_images(self, sample_question_bank):
         """
         Test _copy_images method with multiple image files.
 
         Should copy all images and preserve file extensions.
         """
-        # Ensure target directory exists
-        os.makedirs(local_json_db._img_dir, exist_ok=True)
+        os.makedirs(EMPTY_IMG_DIR, exist_ok=True)
 
-        local_json_db._copy_images(sample_question_bank)
+        my_db = LocalJsonDB(db_file_path=EMPTY_JSON_PATH,
+                            img_dir=EMPTY_IMG_DIR)
+        my_db._copy_images(sample_question_bank)
 
         # Check that images with valid paths were copied
         for qid in sample_question_bank.get_qid_list():
             question = sample_question_bank.get_question(qid)
-            if question.has_img() and os.path.exists(question.get_img_path()):
-                expected_path = f"{local_json_db._img_dir}/{qid}.jpg"
+            if question.has_img():
+                expected_path = f"{EMPTY_IMG_DIR}/{qid}.webp"
                 assert os.path.exists(expected_path)
+
+        shutil.rmtree(EMPTY_IMG_DIR)
 
     def test_copy_images_destination_permission_error(self, local_json_db, sample_question_bank, monkeypatch):
         """

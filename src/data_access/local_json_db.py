@@ -35,12 +35,13 @@ class LocalJsonDB(Database):
         try:
             os.makedirs(self._img_dir, exist_ok=True)
             data = self._serialize_question_bank(qb)
-            self._copy_images(qb)
+            if self._img_dir != qb.get_img_dir():
+                self._copy_images(qb)
             with open(self._db_file_path, 'w') as f:
                 json.dump(data, f, indent=4)
             return True
         except Exception as e:
-            raise ConnectionError(f"Error saving question bank: {e}")
+            raise e
 
     def load(self) -> QuestionBank:
         """
@@ -130,7 +131,14 @@ class LocalJsonDB(Database):
 
     def _get_img_path(self, q_data):
         img_path = q_data["img_path"]
-        return img_path if os.path.exists(img_path) else None
+        if not img_path.strip():
+            return None
+        elif os.path.exists(img_path):
+            return img_path
+        else:
+            raise FileNotFoundError(
+                f"Image file not found: {img_path}. "
+            )
 
     def _get_chapter_num(self, data, qid) -> int:
         # Find which chapter this question belongs to
