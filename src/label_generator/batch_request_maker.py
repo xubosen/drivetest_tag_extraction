@@ -13,12 +13,15 @@ class BatchRequestMaker:
     specified by the OpenAI API for batch processing.
     """
     _qb: QuestionBank
+    _url: str
+    _model: str
     _prompt: str
     _logger: Logger
 
-    def __init__(self, question_bank: QuestionBank, model_name: str,
+    def __init__(self, question_bank: QuestionBank, url: str, model_name: str,
                  prompt: str, logger: Logger):
         self._qb = question_bank
+        self._url = url
         self._model = model_name
         self._prompt = prompt
         self._logger = logger
@@ -46,28 +49,44 @@ class BatchRequestMaker:
         return batch_request
 
     def _make_request(self, question: Question) -> LabelingRequest:
-        self._logger.debug(f"Creating request for question {question.get_id()}")
+        self._logger.debug(f"Creating request for question "
+                           f"{question.get_qid()}")
 
         request = LabelingRequest(custom_id=question.get_qid(),
                                   model=self._model,
+                                  url=self._url,
                                   prompt=self._prompt,
                                   content=self._make_content(question))
 
         self._logger.debug(f"Successfully created request for question "
-                          f"{question.get_id()}")
+                          f"{question.get_qid()}")
         return request
 
-    def _make_content(self, question: Question) -> List[Dict[str, Any]]:
-        if question.get_img_path() is not None:
+    def _make_content(self, question: Question) -> List[Dict[str, str]]:
+        if question.has_img():
             self._logger.debug(f"Processing question with image: "
                               f"{question.get_img_path()}")
-            return [{"type": "image",
-                     "image": self._format_image(question.get_img_path())},
-                    {"type": "text",
-                     "text": self._question_to_dict(question)}]
+            output = [{"type": "image",
+                       "image": self._format_image(question.get_img_path())},
+                      {"type": "text",
+                      "text": self._format_text(question)}]
         else:
             self._logger.debug("Processing text-only question")
-            return [{"type": "text", "text": self._question_to_dict(question)}]
+            output=[{"type": "text", "text": self._format_text(question)}]
+        self._logger.debug(f"Successfully formatted content for question "
+                          f"{question.get_qid()}")
+        return output
+
+    def _format_text(self, question: Question) -> str:
+        """
+        Format the question text into a string representation.
+
+        :param question: Question object to format.
+        :return: Formatted question text.
+        """
+        self._logger.debug("Formatting question text")
+        return str(self._question_to_dict(question))
+
 
     def _format_image(self, img_path: str) -> str:
         """
@@ -90,7 +109,7 @@ class BatchRequestMaker:
             self._logger.error(error_msg)
             raise ValueError(error_msg)
 
-    def _question_to_dict(self, question: Question) -> Dict[str, Any]:
+    def _question_to_dict(self, question: Question) -> Dict[str, str]:
         """
         Format the question into a dictionary representation.
         """
@@ -107,7 +126,7 @@ class BatchRequestMaker:
                               f"{len(dict_question['选项'])} answer choices")
             return dict_question
         except Exception as e:
-            error_msg = (f"Failed to convert question {question.get_id()}: "
+            error_msg = (f"Failed to convert question {question.get_qid()}: "
                          f"{str(e)}")
             self._logger.error(error_msg)
             raise ValueError(error_msg)
@@ -124,7 +143,4 @@ class BatchRequestMaker:
         for i in range(0, len(answer_choices_lst)):
             letter_code = chr(ord('A') + i)
             lettered_choices[letter_code] = answer_choices_lst[i]
-
-        self._logger.debug(f"Successfully assigned letter codes: "
-                          f"{list(lettered_choices.keys())}")
         return lettered_choices
