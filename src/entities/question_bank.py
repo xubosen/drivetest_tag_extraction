@@ -75,6 +75,7 @@ class QuestionBank(BaseModel):
             if count != 1:
                 raise ValueError(
                     f"Question {qid} must belong to exactly one chapter")
+        return self
 
     def add_chapter(self, chapter_num: int, description: str):
         """
