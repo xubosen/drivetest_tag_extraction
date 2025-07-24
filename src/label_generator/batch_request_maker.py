@@ -1,9 +1,6 @@
 import base64
 from logging import Logger
-import os
 from typing import Dict, List, Any, Set
-
-from click.core import batch
 
 from entities.question import Question
 from entities.question_bank import QuestionBank
