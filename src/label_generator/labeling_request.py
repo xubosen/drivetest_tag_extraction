@@ -20,9 +20,9 @@ URL_TO_MODELS = {
                              'qwen-vl-max-latest',
                              'qwen-vl-plus'
                              'qwen-omni-turbo'},
-    "/v1/embeddings": {"text-embedding-v1, "
-                       "text-embedding-v2, "
-                       "text-embedding-v3, "
+    "/v1/embeddings": {"text-embedding-v1",
+                       "text-embedding-v2",
+                       "text-embedding-v3",
                        "text-embedding-v4"}
 }
 
