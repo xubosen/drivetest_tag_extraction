@@ -5,7 +5,6 @@ import tempfile
 import os
 import json
 from pydantic import ValidationError
-from unittest.mock import patch, mock_open
 
 
 # Test constants
@@ -20,6 +19,7 @@ VALID_CONTENT = [{"type": "text", "text": "Test message"}]
 # Sample file paths for testing
 TEST_FILE_PATH = "/tmp/test_batch_request.jsonl"
 INVALID_FILE_PATH = "/nonexistent/directory/test.jsonl"
+READONLY_FILE_PATH = "/tmp/readonly_test_batch_request.jsonl"
 
 # Test data for validation errors
 INVALID_REQUEST_TYPES = [
@@ -29,6 +29,52 @@ INVALID_REQUEST_TYPES = [
     [],
     True
 ]
+
+# Additional test constants for file operations
+TEMP_FILE_PREFIX = "test_batch_request_"
+TEMP_FILE_SUFFIX = ".jsonl"
+
+# Unicode test constants
+UNICODE_CHARACTERS = {
+    "chinese": "你好世界",
+    "japanese": "こんにちは世界",
+    "emoji": "🌟🚀✨💡",
+    "french": "Bonjour ça va très bien",
+    "mixed": "Hello 世界 🌍 Testing émojis 🎉",
+    "special_chars": "!@#$%^&*()_+-=[]{}|;':,./<>?"
+}
+
+
+# Helper functions for test setup and cleanup
+def create_readonly_file(file_path: str) -> None:
+    """Create a read-only file for permission testing."""
+    with open(file_path, 'w') as f:
+        f.write("test content")
+    os.chmod(file_path, 0o444)  # Read-only permissions
+
+
+def cleanup_test_file(file_path: str) -> None:
+    """Clean up test files with proper error handling."""
+    try:
+        if os.path.exists(file_path):
+            # Reset permissions if needed
+            os.chmod(file_path, 0o644)
+            os.remove(file_path)
+    except (OSError, PermissionError):
+        pass  # Ignore cleanup errors in tests
+
+
+def create_sample_labeling_request(custom_id: str = VALID_CUSTOM_ID_1, **overrides) -> LabelingRequest:
+    """Helper function to create a LabelingRequest with optional overrides."""
+    data = {
+        "custom_id": custom_id,
+        "url": VALID_URL,
+        "model": VALID_MODEL,
+        "prompt": VALID_PROMPT,
+        "content": VALID_CONTENT
+    }
+    data.update(overrides)
+    return LabelingRequest(**data)
 
 
 # Pytest fixtures for reusable test data
@@ -388,61 +434,310 @@ class TestLabelingBatchRequestModification:
 class TestToBatchJsonlMethod:
     """Test suite for the to_batch_jsonl() method."""
 
+    def _create_batch_request(self, requests=None):
+        """Helper method to create a LabelingBatchRequest with optional requests."""
+        if requests is None:
+            return LabelingBatchRequest()
+        return LabelingBatchRequest(requests=requests)
+
+    def _create_sample_request(self, custom_id=VALID_CUSTOM_ID_1, **overrides):
+        """Helper method to create a sample LabelingRequest with optional overrides."""
+        data = {
+            "custom_id": custom_id,
+            "url": VALID_URL,
+            "model": VALID_MODEL,
+            "prompt": VALID_PROMPT,
+            "content": VALID_CONTENT
+        }
+        data.update(overrides)
+        return LabelingRequest(**data)
+
+    def _parse_jsonl_lines(self, jsonl_output):
+        """Helper method to parse JSONL output into individual JSON objects."""
+        if not jsonl_output.strip():
+            return []
+        return [json.loads(line) for line in jsonl_output.strip().split('\n')]
+
     def test_to_batch_jsonl_empty_requests(self):
         """Test to_batch_jsonl method with empty requests list."""
-        pass
+        batch_request = self._create_batch_request()
+        result = batch_request.to_batch_jsonl()
+
+        # Empty requests should return empty string
+        assert result == ""
+        assert len(result) == 0
 
     def test_to_batch_jsonl_single_request(self, valid_labeling_request):
         """Test to_batch_jsonl method with a single request."""
-        pass
+        batch_request = self._create_batch_request([valid_labeling_request])
+        result = batch_request.to_batch_jsonl()
+
+        # Should return single line of JSON
+        lines = result.strip().split('\n')
+        assert len(lines) == 1
+
+        # Parse and verify JSON structure
+        parsed_request = json.loads(lines[0])
+        assert parsed_request["custom_id"] == VALID_CUSTOM_ID_1
+        assert parsed_request["method"] == "POST"
+        assert parsed_request["url"] == VALID_URL
+        assert "body" in parsed_request
+
+        body = parsed_request["body"]
+        assert body["model"] == VALID_MODEL
+        assert "messages" in body
+        assert len(body["messages"]) == 2
+        assert body["messages"][0]["role"] == "system"
+        assert body["messages"][0]["content"] == VALID_PROMPT
+        assert body["messages"][1]["role"] == "user"
+        assert body["messages"][1]["content"] == VALID_CONTENT
 
     def test_to_batch_jsonl_multiple_requests(self, multiple_valid_requests):
         """Test to_batch_jsonl method with multiple requests."""
-        pass
+        batch_request = self._create_batch_request(multiple_valid_requests)
+        result = batch_request.to_batch_jsonl()
+
+        # Should return multiple lines
+        lines = result.strip().split('\n')
+        assert len(lines) == len(multiple_valid_requests)
+
+        # Verify each line is valid JSON with correct structure
+        for i, line in enumerate(lines):
+            parsed_request = json.loads(line)
+            original_request = multiple_valid_requests[i]
+
+            assert parsed_request["custom_id"] == original_request.custom_id
+            assert parsed_request["method"] == "POST"
+            assert parsed_request["url"] == original_request.url
+
+            body = parsed_request["body"]
+            assert body["model"] == original_request.model
+            assert body["messages"][0]["content"] == original_request.prompt
+            assert body["messages"][1]["content"] == original_request.content
 
     def test_to_batch_jsonl_preserves_request_order(self, multiple_valid_requests):
         """Test that the order of requests is preserved in the JSONL output."""
-        pass
+        batch_request = self._create_batch_request(multiple_valid_requests)
+        result = batch_request.to_batch_jsonl()
+
+        parsed_lines = self._parse_jsonl_lines(result)
+        assert len(parsed_lines) == len(multiple_valid_requests)
+
+        # Verify order is preserved by checking custom_ids
+        for i, parsed_request in enumerate(parsed_lines):
+            expected_custom_id = multiple_valid_requests[i].custom_id
+            assert parsed_request["custom_id"] == expected_custom_id
+
+        # Test with reversed order to ensure order dependency
+        reversed_requests = list(reversed(multiple_valid_requests))
+        batch_request_reversed = self._create_batch_request(reversed_requests)
+        result_reversed = batch_request_reversed.to_batch_jsonl()
+
+        parsed_lines_reversed = self._parse_jsonl_lines(result_reversed)
+        for i, parsed_request in enumerate(parsed_lines_reversed):
+            expected_custom_id = reversed_requests[i].custom_id
+            assert parsed_request["custom_id"] == expected_custom_id
 
     def test_to_batch_jsonl_unicode_content_handling(self):
         """Test to_batch_jsonl method with unicode characters in requests."""
-        pass
+        unicode_requests = []
+
+        # Create requests with various unicode content
+        for key, unicode_text in UNICODE_CHARACTERS.items():
+            request = self._create_sample_request(
+                custom_id=f"unicode_{key}",
+                prompt=f"Process this:",
+                content=[{"type": "text", "text": unicode_text}]
+            )
+            unicode_requests.append(request)
+
+        batch_request = self._create_batch_request(unicode_requests)
+        result = batch_request.to_batch_jsonl()
+
+        # Verify all unicode characters are present in output
+        for unicode_text in UNICODE_CHARACTERS.values():
+            assert unicode_text in result
+
+        # Verify each line is valid JSON
+        parsed_lines = self._parse_jsonl_lines(result)
+        assert len(parsed_lines) == len(unicode_requests)
+
+        # Verify unicode preservation in parsed JSON
+        for i, parsed_request in enumerate(parsed_lines):
+            expected_unicode = list(UNICODE_CHARACTERS.values())[i]
+            assert expected_unicode in str(parsed_request)
 
     def test_to_batch_jsonl_mixed_content_types(self, mixed_content_requests):
         """Test to_batch_jsonl method with requests containing different content types."""
-        pass
+        batch_request = self._create_batch_request(mixed_content_requests)
+        result = batch_request.to_batch_jsonl()
+
+        parsed_lines = self._parse_jsonl_lines(result)
+        assert len(parsed_lines) == len(mixed_content_requests)
+
+        # Verify each request type is correctly represented
+        for i, parsed_request in enumerate(parsed_lines):
+            original_request = mixed_content_requests[i]
+
+            # Check basic structure
+            assert parsed_request["custom_id"] == original_request.custom_id
+            assert parsed_request["url"] == original_request.url
+
+            # Check content in the user message
+            user_content = parsed_request["body"]["messages"][1]["content"]
+            assert user_content == original_request.content
+
+            # Verify content types are preserved
+            for content_item in user_content:
+                assert content_item["type"] in ["text", "image"]
+                if content_item["type"] == "text":
+                    assert "text" in content_item
+                elif content_item["type"] == "image":
+                    assert "image" in content_item
 
 
 class TestToJsonlFileMethod:
     """Test suite for the to_jsonl_file() method."""
 
-    def test_to_jsonl_file_creates_file_successfully(self, multiple_valid_requests):
+    def test_to_jsonl_file_creates_file_successfully(
+            self, multiple_valid_requests):
         """Test that to_jsonl_file creates a file successfully with valid content."""
-        pass
+        batch_request = LabelingBatchRequest(requests=multiple_valid_requests)
+        file_path = TEST_FILE_PATH
 
-    def test_to_jsonl_file_content_matches_to_batch_jsonl(self, multiple_valid_requests):
+        # Ensure file does not exist before test
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+        batch_request.to_jsonl_file(file_path)
+
+        # Verify file was created and contains expected content
+        assert os.path.exists(file_path)
+        with open(file_path, "r", encoding="utf-8") as f:
+            file_content = f.read()
+
+        assert file_content == batch_request.to_batch_jsonl()
+
+        # Clean up test file
+        os.remove(file_path)
+
+    def test_to_jsonl_file_content_matches_to_batch_jsonl(
+            self, multiple_valid_requests):
         """Test that file content matches the output of to_batch_jsonl method."""
-        pass
+        batch_request = LabelingBatchRequest(requests=multiple_valid_requests)
+        file_path = TEST_FILE_PATH
+
+        # Ensure file does not exist before test
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+        batch_request.to_jsonl_file(file_path)
+
+        # Read back the file content
+        with open(file_path, "r", encoding="utf-8") as f:
+            file_content = f.read()
+
+        assert file_content == batch_request.to_batch_jsonl()
+
+        # Clean up test file
+        os.remove(file_path)
 
     def test_to_jsonl_file_empty_requests_creates_empty_file(self):
         """Test that to_jsonl_file with empty requests creates an empty file."""
-        pass
+        batch_request = LabelingBatchRequest(requests=[])
+        file_path = TEST_FILE_PATH
+
+        # Ensure file does not exist before test
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+        batch_request.to_jsonl_file(file_path)
+
+        # Verify file was created and is empty
+        assert os.path.exists(file_path)
+        with open(file_path, "r", encoding="utf-8") as f:
+            file_content = f.read()
+
+        assert file_content == ""
+
+        # Clean up test file
+        os.remove(file_path)
 
     def test_to_jsonl_file_unicode_encoding_utf8(self):
         """Test that to_jsonl_file properly handles unicode characters with UTF-8 encoding."""
-        pass
+        unicode_request = LabelingRequest(
+            custom_id="unicode_test",
+            url=VALID_URL,
+            model=VALID_MODEL,
+            prompt=VALID_PROMPT,
+            content=[
+                {"type": "text", "text": UNICODE_CHARACTERS["chinese"]},
+                {"type": "text", "text": UNICODE_CHARACTERS["japanese"]},
+                {"type": "text", "text": UNICODE_CHARACTERS["emoji"]},
+                {"type": "text", "text": UNICODE_CHARACTERS["french"]},
+                {"type": "text", "text": UNICODE_CHARACTERS["mixed"]},
+                {"type": "text", "text": UNICODE_CHARACTERS["special_chars"]},
+            ]
+        )
+        batch_request = LabelingBatchRequest(requests=[unicode_request])
+        file_path = TEST_FILE_PATH
 
-    def test_to_jsonl_file_invalid_path_raises_ioerror(self, multiple_valid_requests):
-        """Test that to_jsonl_file raises IOError for invalid file paths."""
-        pass
+        # Ensure file does not exist before test
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
-    def test_to_jsonl_file_permission_denied_raises_ioerror(self, multiple_valid_requests):
-        """Test that to_jsonl_file raises IOError when write permission is denied."""
-        pass
+        batch_request.to_jsonl_file(file_path)
 
-    def test_to_jsonl_file_custom_error_message_format(self, multiple_valid_requests):
-        """Test that IOError messages include the file path and original error."""
-        pass
+        # Verify file was created and contains the unicode content
+        assert os.path.exists(file_path)
+        with open(file_path, "r", encoding="utf-8") as f:
+            file_content = f.read()
+
+        # Check that the file content contains the unicode characters
+        for value in UNICODE_CHARACTERS.values():
+            assert value in file_content
+
+        # Clean up test file
+        os.remove(file_path)
+
+    def test_to_jsonl_file_invalid_path(self, multiple_valid_requests):
+        """Test that to_jsonl_file raises OSError for invalid file paths."""
+        batch_request = LabelingBatchRequest(requests=multiple_valid_requests)
+        with pytest.raises(OSError) as exc_info:
+            batch_request.to_jsonl_file(INVALID_FILE_PATH)
+        assert INVALID_FILE_PATH in str(exc_info.value)
+
+    def test_to_jsonl_file_permission_denied(self):
+        """Test that to_jsonl_file raises OSError when write permission is denied."""
+        # Create a test batch request
+        sample_request = create_sample_labeling_request("perm_test_001")
+        batch_request = LabelingBatchRequest(requests=[sample_request])
+
+        # Create a read-only file first (to ensure directory exists)
+        readonly_path = READONLY_FILE_PATH
+        create_readonly_file(readonly_path)
+
+        try:
+            # Attempt to write to the read-only file should raise OSError
+            with pytest.raises(OSError) as exc_info:
+                batch_request.to_jsonl_file(readonly_path)
+
+            # Verify the error message mentions the file path
+            error_message = str(exc_info.value)
+            assert readonly_path in error_message or "Permission denied" in error_message
+
+        finally:
+            # Clean up the test file
+            cleanup_test_file(readonly_path)
+
+    def test_to_jsonl_file_custom_error_message_format(
+            self, multiple_valid_requests):
+        """Test that error messages include the file path and original
+        error."""
+        batch_request = LabelingBatchRequest(requests=multiple_valid_requests)
+        with pytest.raises(OSError) as exc_info:
+            batch_request.to_jsonl_file(INVALID_FILE_PATH)
+        assert str(INVALID_FILE_PATH) in str(exc_info.value)
 
 
 class TestLabelingBatchRequestIntegration:
@@ -450,15 +745,59 @@ class TestLabelingBatchRequestIntegration:
 
     def test_create_populate_and_export_workflow(self, multiple_valid_requests):
         """Test complete workflow: create batch, populate with requests, export to file."""
-        pass
+        # Step 1: Create an empty batch request
+        batch_request = LabelingBatchRequest()
+        assert len(batch_request.requests) == 0
 
+        # Step 2: Populate with requests one by one
+        for request in multiple_valid_requests:
+            batch_request.requests.append(request)
 
-class TestLabelingBatchRequestErrorHandling:
-    """Test suite for error handling and exception scenarios."""
+        assert len(batch_request.requests) == len(multiple_valid_requests)
 
-    def test_io_error_message_contains_file_path_and_original_error(self, multiple_valid_requests):
-        """Test that IOError messages are properly formatted with context."""
-        pass
+        # Step 3: Generate JSONL content
+        jsonl_content = batch_request.to_batch_jsonl()
+        assert jsonl_content != ""
+
+        # Verify content structure
+        lines = jsonl_content.strip().split('\n')
+        assert len(lines) == len(multiple_valid_requests)
+
+        for i, line in enumerate(lines):
+            parsed = json.loads(line)
+            assert parsed["custom_id"] == multiple_valid_requests[i].custom_id
+            assert parsed["method"] == "POST"
+            assert "body" in parsed
+
+        # Step 4: Export to file using temporary file
+        with tempfile.NamedTemporaryFile(mode='w', suffix=TEMP_FILE_SUFFIX,
+                                       prefix=TEMP_FILE_PREFIX, delete=False) as temp_file:
+            temp_path = temp_file.name
+
+        try:
+            # Export to file
+            batch_request.to_jsonl_file(temp_path)
+
+            # Step 5: Verify file was created and has correct content
+            assert os.path.exists(temp_path)
+
+            with open(temp_path, 'r', encoding='utf-8') as f:
+                file_content = f.read()
+
+            assert file_content == jsonl_content
+
+            # Step 6: Verify we can parse each line in the file
+            file_lines = file_content.strip().split('\n')
+            for line in file_lines:
+                parsed = json.loads(line)
+                assert "custom_id" in parsed
+                assert "method" in parsed
+                assert "url" in parsed
+                assert "body" in parsed
+
+        finally:
+            # Clean up
+            cleanup_test_file(temp_path)
 
 
 class TestLabelingBatchRequestValidation:
@@ -466,16 +805,80 @@ class TestLabelingBatchRequestValidation:
 
     def test_pydantic_validation_assignment_enabled(self, valid_labeling_request):
         """Test that validate_assignment configuration works correctly."""
-        pass
+        # Create a batch request with initial data
+        batch_request = LabelingBatchRequest(requests=[valid_labeling_request])
+        assert len(batch_request.requests) == 1
+
+        # Test that we can assign valid LabelingRequest objects after creation
+        new_request = create_sample_labeling_request("validation_test_001")
+        batch_request.requests = [new_request]
+        assert len(batch_request.requests) == 1
+        assert batch_request.requests[0].custom_id == "validation_test_001"
+
+        # Test that assignment validation catches invalid types
+        with pytest.raises(ValidationError) as exc_info:
+            batch_request.requests = ["invalid_request"]
+
+        error_message = str(exc_info.value)
+        assert "validation error" in error_message.lower() or "type" in error_message.lower()
 
     def test_pydantic_extra_fields_forbidden(self):
         """Test that extra fields are properly forbidden by Pydantic configuration."""
-        pass
+        # Test that extra fields in constructor are forbidden
+        with pytest.raises(ValidationError) as exc_info:
+            LabelingBatchRequest(
+                requests=[],
+                unexpected_field="not_allowed"
+            )
+
+        error_message = str(exc_info.value)
+        assert "extra" in error_message.lower() or "forbidden" in error_message.lower()
+
+        # Test that setting extra attributes after creation is also forbidden
+        batch_request = LabelingBatchRequest()
+
+        # Pydantic should prevent setting extra attributes
+        with pytest.raises((ValidationError, AttributeError)):
+            batch_request.extra_attribute = "should_fail"
 
     def test_pydantic_arbitrary_types_allowed(self):
         """Test that arbitrary_types_allowed configuration works for LabelingRequest objects."""
-        pass
+        # Create LabelingRequest objects (which are custom types)
+        request1 = create_sample_labeling_request("arbitrary_test_001")
+        request2 = create_sample_labeling_request("arbitrary_test_002")
+
+        # Test that custom LabelingRequest objects are accepted
+        batch_request = LabelingBatchRequest(requests=[request1, request2])
+
+        assert len(batch_request.requests) == 2
+        assert isinstance(batch_request.requests[0], LabelingRequest)
+        assert isinstance(batch_request.requests[1], LabelingRequest)
+        assert batch_request.requests[0].custom_id == "arbitrary_test_001"
+        assert batch_request.requests[1].custom_id == "arbitrary_test_002"
+
+        # Test that other arbitrary types are still rejected
+        with pytest.raises(ValidationError):
+            LabelingBatchRequest(requests=[request1, object()])
 
     def test_pydantic_field_default_factory_behavior(self):
         """Test that the default_factory for requests field works correctly."""
-        pass
+        # Test that creating without requests parameter uses default_factory
+        batch_request1 = LabelingBatchRequest()
+        batch_request2 = LabelingBatchRequest()
+
+        # Both should have empty lists but different instances
+        assert batch_request1.requests == []
+        assert batch_request2.requests == []
+        assert batch_request1.requests is not batch_request2.requests  # Different instances
+
+        # Test that modifying one doesn't affect the other
+        sample_request = create_sample_labeling_request("factory_test_001")
+        batch_request1.requests.append(sample_request)
+
+        assert len(batch_request1.requests) == 1
+        assert len(batch_request2.requests) == 0
+
+        # Test that explicit empty list also works
+        batch_request3 = LabelingBatchRequest(requests=[])
+        assert batch_request3.requests == []
+        assert len(batch_request3.requests) == 0
