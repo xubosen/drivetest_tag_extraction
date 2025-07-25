@@ -10,6 +10,8 @@ class DataFormat(BaseModel):
     Data format for the question bank.
     """
     image_shape: tuple[int, int] = Field(default=(256, 256),
+                                         min_length=2,
+                                         max_length=2,
                                          description="Size to which images "
                                                      "will be reshaped.")
     input_image_extension: str = Field(..., description="Extension of the input"
@@ -17,18 +19,19 @@ class DataFormat(BaseModel):
     output_image_extension: str = Field(..., description="Extension of the "
                                                          "output images.")
 
-    @field_validator("image_shape")
+    @field_validator("image_shape", mode="before")
     @classmethod
     def validate_image_shape(cls, value: tuple[int, int]) -> tuple[int, int]:
         """
         Validate that the image shape is a tuple of two positive integers above
         or equal to 28.
         """
-        if len(value) != 2:
-            raise ValueError("image_size must be a tuple of two integers.")
-        if not all(isinstance(dim, int) and dim >= 28 for dim in value):
-            raise ValueError("Both dimensions of image_size must be positive "
-                             "integers greater or equal to 28.")
+        if not isinstance(value, tuple):
+            raise ValueError("Image shape must be a tuple of two integers.")
+        for val in value:
+            if not isinstance(val, int) or val < 28:
+                raise ValueError(f"Image shape values must be integers "
+                                 f"greater than or equal to 28: {value}.")
         return value
 
     @field_validator("input_image_extension",
@@ -54,6 +57,11 @@ class DataFormatter:
         """
         Initializes the DataFormatter with the output directory.
         """
+        if not isinstance(data_format, DataFormat):
+            raise TypeError(
+                f"Invalid data format: {data_format}. "
+                f"Expected instance of DataFormat."
+            )
         self._data_format = data_format
 
     def format_data(self, question_bank: QuestionBank,
