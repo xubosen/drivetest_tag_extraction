@@ -257,21 +257,132 @@ class TestLabelingBatchRequestCreation:
 class TestLabelingBatchRequestModification:
     """Test suite for modifying LabelingBatchRequest after creation."""
 
+    def _create_empty_batch(self):
+        """Helper method to create an empty LabelingBatchRequest."""
+        return LabelingBatchRequest()
+
+    def _create_populated_batch(self, requests):
+        """Helper method to create a LabelingBatchRequest with given requests."""
+        return LabelingBatchRequest(requests=requests)
+
+    def _create_sample_request(self, custom_id=VALID_CUSTOM_ID_1, **overrides):
+        """Helper method to create a sample LabelingRequest with optional overrides."""
+        data = {
+            "custom_id": custom_id,
+            "url": VALID_URL,
+            "model": VALID_MODEL,
+            "prompt": VALID_PROMPT,
+            "content": VALID_CONTENT
+        }
+        data.update(overrides)
+        return LabelingRequest(**data)
+
     def test_add_request_to_empty_batch(self, valid_labeling_request):
         """Test adding a request to an initially empty batch."""
-        pass
+        batch_request = self._create_empty_batch()
+
+        # Verify initially empty
+        assert len(batch_request.requests) == 0
+
+        # Add a request
+        batch_request.requests.append(valid_labeling_request)
+
+        # Verify request was added successfully
+        assert len(batch_request.requests) == 1
+        assert batch_request.requests[0] == valid_labeling_request
+        assert isinstance(batch_request.requests[0], LabelingRequest)
+
+        # Verify request attributes are preserved
+        request = batch_request.requests[0]
+        assert request.custom_id == VALID_CUSTOM_ID_1
+        assert request.url == VALID_URL
+        assert request.model == VALID_MODEL
 
     def test_add_multiple_requests_to_batch(self, multiple_valid_requests):
         """Test adding multiple requests to an existing batch."""
-        pass
+        # Start with empty batch
+        batch_request = self._create_empty_batch()
+        assert len(batch_request.requests) == 0
+
+        # Add first request
+        batch_request.requests.append(multiple_valid_requests[0])
+        assert len(batch_request.requests) == 1
+        assert batch_request.requests[0].custom_id == VALID_CUSTOM_ID_1
+
+        # Add second request
+        batch_request.requests.append(multiple_valid_requests[1])
+        assert len(batch_request.requests) == 2
+        assert batch_request.requests[1].custom_id == VALID_CUSTOM_ID_2
+
+        # Add third request
+        batch_request.requests.append(multiple_valid_requests[2])
+        assert len(batch_request.requests) == 3
+        assert batch_request.requests[2].custom_id == VALID_CUSTOM_ID_3
+
+        # Verify all requests are preserved in correct order
+        assert batch_request.requests == multiple_valid_requests
+
+        # Test extending with multiple requests at once
+        additional_request = self._create_sample_request(
+            custom_id="additional_001",
+            content=[{"type": "text", "text": "Additional request"}]
+        )
+        batch_request.requests.extend([additional_request])
+        assert len(batch_request.requests) == 4
+        assert batch_request.requests[3].custom_id == "additional_001"
 
     def test_remove_request_from_batch(self, multiple_valid_requests):
         """Test removing a request from a batch with multiple requests."""
-        pass
+        # Start with populated batch
+        batch_request = self._create_populated_batch(multiple_valid_requests)
+        initial_count = len(batch_request.requests)
+        assert initial_count == 3
+
+        # Remove first request by index
+        removed_request = batch_request.requests.pop(0)
+        assert len(batch_request.requests) == initial_count - 1
+        assert removed_request.custom_id == VALID_CUSTOM_ID_1
+        assert batch_request.requests[0].custom_id == VALID_CUSTOM_ID_2
+
+        # Remove specific request by value
+        second_request = batch_request.requests[0]  # Now the first after previous removal
+        batch_request.requests.remove(second_request)
+        assert len(batch_request.requests) == initial_count - 2
+        assert batch_request.requests[0].custom_id == VALID_CUSTOM_ID_3
+
+        # Remove last request
+        batch_request.requests.pop()
+        assert len(batch_request.requests) == 0
+
+        # Test removing from empty list (should raise IndexError)
+        with pytest.raises(IndexError):
+            batch_request.requests.pop()
 
     def test_clear_all_requests_from_batch(self, multiple_valid_requests):
         """Test clearing all requests from a populated batch."""
-        pass
+        # Start with populated batch
+        batch_request = self._create_populated_batch(multiple_valid_requests)
+        assert len(batch_request.requests) == 3
+
+        # Clear all requests
+        batch_request.requests.clear()
+
+        # Verify batch is now empty
+        assert len(batch_request.requests) == 0
+        assert batch_request.requests == []
+
+        # Test that we can still add requests after clearing
+        new_request = self._create_sample_request(
+            custom_id="after_clear_001",
+            content=[{"type": "text", "text": "Added after clear"}]
+        )
+        batch_request.requests.append(new_request)
+        assert len(batch_request.requests) == 1
+        assert batch_request.requests[0].custom_id == "after_clear_001"
+
+        # Test alternative clearing method with slice assignment
+        batch_request.requests[:] = []
+        assert len(batch_request.requests) == 0
 
 
 class TestToBatchJsonlMethod:

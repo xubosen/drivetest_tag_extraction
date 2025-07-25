@@ -1,13 +1,13 @@
 import base64
 from logging import Logger
-from typing import Dict, List, Any, Set
+from typing import Dict, List, Set
 
 from entities.question import Question
 from entities.question_bank import QuestionBank
 from label_generator.labeling_request import LabelingRequest
 from label_generator.batch_request import LabelingBatchRequest
 
-class BatchRequestMaker:
+class BatchRequestFactory:
     """
     A Pydantic model to format the question bank into a batch request object
     specified by the OpenAI API for batch processing.
