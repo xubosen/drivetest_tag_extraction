@@ -46,6 +46,10 @@ class DataFormat(BaseModel):
                              f"Valid extensions are: {VALID_EXTENSIONS}.")
         return extension.lower()
 
+    class Config:
+        extra = 'forbid'
+        validate_assignment = True
+
 class DataFormatter:
     """
     Class of objects that formats the question bank object for automatic

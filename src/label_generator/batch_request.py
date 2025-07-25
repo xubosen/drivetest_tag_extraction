@@ -27,8 +27,8 @@ class LabelingBatchRequest(BaseModel):
             raise IOError(f"Failed to write to file {file_path}: {e}")
 
 
-class Config:
-    """Pydantic configuration for the LabelingBatchRequest."""
-    validate_assignment = True
-    extra = "forbid"  # Disallow extra fields in the model
-    arbitrary_types_allowed = True  # Allow arbitrary types in the model
+    class Config:
+        """Pydantic configuration for the LabelingBatchRequest."""
+        validate_assignment = True
+        extra = "forbid"
+        arbitrary_types_allowed = True
