@@ -88,18 +88,6 @@ def _create_mock_reshaper(temp_directories,
     mock_reshaper.reshape.return_value = img_path
     return mock_reshaper
 
-def _has_img(question: Question) -> bool:
-    """Helper function to check if a question has an image."""
-    return question.img_path is not None
-
-def _set_img_path(question: Question, new_path: str):
-    """Helper function to set image path on a question."""
-    question.img_path = new_path
-
-def _get_qid(question: Question) -> str:
-    """Helper function to get question ID."""
-    return question.qid
-
 
 class TestDataFormat:
     """Test cases for the DataFormat Pydantic model."""
@@ -493,15 +481,6 @@ class TestDataFormatter:
         question = sample_question_bank.get_question("test_q1")
         assert question.img_path == new_path
 
-    # COMMENTED OUT: Redundant with test_format_data_without_images
-    # def test_resize_images_skips_questions_without_images(self):
-    #     """
-    #     Test that _resize_images skips questions that don't have images.
-    #     Should not call reshaper for questions where has_img() returns False.
-    #     """
-    #     # This functionality is already tested in test_format_data_without_images
-    #     # and test_format_data_mixed_image_questions
-
     @patch('data_formatting.data_formatter.ImgReshaper')
     def test_resize_images_handles_reshaper_errors(self, mock_reshaper_class, sample_data_format, sample_question_bank, temp_directories):
         """
@@ -568,19 +547,10 @@ class TestDataFormatter:
         # Should still update image directory
         assert result.get_img_dir() == output_dir
 
-    # COMMENTED OUT: Performance test not critical for unit testing
-    # def test_format_data_with_large_question_bank(self):
-    #     """
-    #     Test format_data performance and correctness with a large QuestionBank.
-    #     Should efficiently process many questions without memory issues.
-    #     """
-    #     # This is more of an integration/performance test that would be better
-    #     # suited for a separate performance test suite. Unit tests should focus
-    #     # on correctness rather than performance.
-
 
 class TestDataFormatterIntegration:
     """Integration tests for DataFormatter with real file operations."""
+    # TODO: Implement these tests to verify end-to-end functionality
 
     def test_end_to_end_image_processing(self):
         """
