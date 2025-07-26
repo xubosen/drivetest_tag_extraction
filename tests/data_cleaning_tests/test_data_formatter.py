@@ -5,7 +5,8 @@ from unittest.mock import Mock, patch, MagicMock
 from PIL import Image
 from pydantic import ValidationError
 
-from data_formatting.data_formatter import DataFormatter, DataFormat
+from data_formatting.data_formatter import (DataFormatter, DataFormat,
+                                            MIN_IMG_SIZE)
 from entities.question_bank import QuestionBank
 from entities.question import Question
 
@@ -90,7 +91,10 @@ def _create_mock_reshaper(temp_directories,
 
 
 class TestDataFormat:
-    """Test cases for the DataFormat Pydantic model."""
+    def setup_method(self):
+        self._image_shape_error = "Image shape values must be" \
+                                  " integers greater than or equal " \
+                                  "to"
 
     def test_data_format_valid_creation(self):
         """
@@ -165,9 +169,7 @@ class TestDataFormat:
         Should raise ValueError for negative integers in the tuple.
         """
         # Test with negative width
-        with pytest.raises(ValueError, match="Image shape values must be"
-                                             " integers greater than or equal "
-                                             "to 28:"):
+        with pytest.raises(ValueError, match=self._image_shape_error):
             DataFormat(
                 image_shape=(-100, 256),
                 input_image_extension="jpg",
@@ -175,9 +177,7 @@ class TestDataFormat:
             )
 
         # Test with negative height
-        with pytest.raises(ValueError, match="Image shape values must be"
-                                             " integers greater than or equal "
-                                             "to 28:"):
+        with pytest.raises(ValueError, match=self._image_shape_error):
             DataFormat(
                 image_shape=(256, -100),
                 input_image_extension="jpg",
@@ -185,9 +185,7 @@ class TestDataFormat:
             )
 
         # Test with both negative
-        with pytest.raises(ValueError, match="Image shape values must be"
-                                             " integers greater than or equal "
-                                             "to 28:"):
+        with pytest.raises(ValueError, match=self._image_shape_error):
             DataFormat(
                 image_shape=(-256, -256),
                 input_image_extension="jpg",
@@ -196,35 +194,30 @@ class TestDataFormat:
 
     def test_data_format_invalid_image_shape_too_small(self):
         """
-        Test that DataFormat rejects image dimensions smaller than 28.
-        Should raise ValueError for dimensions < 28.
+        Test that DataFormat rejects image dimensions smaller than
+        MIN_IMG_SIZE.
+        Should raise ValueError for dimensions < MIN_IMG_SIZE.
         """
         # Test with width too small
-        with pytest.raises(ValueError, match="Image shape values must be"
-                                             " integers greater than or equal "
-                                             "to 28:"):
+        with pytest.raises(ValueError, match=self._image_shape_error):
             DataFormat(
-                image_shape=(27, 256),
+                image_shape=(MIN_IMG_SIZE-1, 256),
                 input_image_extension="jpg",
                 output_image_extension="png"
             )
 
         # Test with height too small
-        with pytest.raises(ValueError, match="Image shape values must be"
-                                             " integers greater than or equal "
-                                             "to 28:"):
+        with pytest.raises(ValueError, match=self._image_shape_error):
             DataFormat(
-                image_shape=(256, 27),
+                image_shape=(256, MIN_IMG_SIZE-1),
                 input_image_extension="jpg",
                 output_image_extension="png"
             )
 
         # Test with both too small
-        with pytest.raises(ValueError, match="Image shape values must be"
-                                             " integers greater than or equal "
-                                             "to 28:"):
+        with pytest.raises(ValueError, match=self._image_shape_error):
             DataFormat(
-                image_shape=(10, 20),
+                image_shape=(10, MIN_IMG_SIZE-1),
                 input_image_extension="jpg",
                 output_image_extension="png"
             )
@@ -310,24 +303,24 @@ class TestDataFormat:
 
     def test_data_format_edge_case_minimum_dimensions(self):
         """
-        Test DataFormat with minimum allowed dimensions (28, 28).
+        Test DataFormat with minimum allowed dimensions.
         Should successfully create instance with the boundary values.
         """
         # Test exactly at the minimum boundary
         data_format = DataFormat(
-            image_shape=(28, 28),
+            image_shape=(MIN_IMG_SIZE, MIN_IMG_SIZE),
             input_image_extension="jpg",
             output_image_extension="png"
         )
-        assert data_format.image_shape == (28, 28)
+        assert data_format.image_shape == (MIN_IMG_SIZE, MIN_IMG_SIZE)
 
         # Test slightly above minimum
         data_format2 = DataFormat(
-            image_shape=(29, 28),
+            image_shape=(MIN_IMG_SIZE+1, MIN_IMG_SIZE),
             input_image_extension="jpg",
             output_image_extension="png"
         )
-        assert data_format2.image_shape == (29, 28)
+        assert data_format2.image_shape == (MIN_IMG_SIZE+1, MIN_IMG_SIZE)
 
 
 class TestDataFormatter:

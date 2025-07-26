@@ -2,6 +2,8 @@ from entities.question_bank import QuestionBank
 from data_formatting.img_reshaper import ImgReshaper
 from pydantic import BaseModel, Field, field_validator
 
+MIN_IMG_SIZE = 28 * 4
+
 VALID_EXTENSIONS = {"jpg", "jpeg", "webp", "png", "bmp", "gif"}
 
 
@@ -29,9 +31,10 @@ class DataFormat(BaseModel):
         if not isinstance(value, tuple):
             raise ValueError("Image shape must be a tuple of two integers.")
         for val in value:
-            if not isinstance(val, int) or val < 28:
+            if not isinstance(val, int) or val < MIN_IMG_SIZE:
                 raise ValueError(f"Image shape values must be integers "
-                                 f"greater than or equal to 28: {value}.")
+                                 f"greater than or equal to {MIN_IMG_SIZE}."
+                                 f"Current value: {value}.")
         return value
 
     @field_validator("input_image_extension",
