@@ -1,48 +1,4 @@
 import pytest
-from unittest.mock import Mock, patch, mock_open
-import base64
-import tempfile
-import os
-
-from label_generator.labeling_request import LabelingRequest
-from label_generator.request_factory import RequestFactory
-from entities.question import Question
-
-
-# Test fixtures and constants
-@pytest.fixture
-def mock_logger():
-    """Fixture providing a mock logger for RequestFactory testing."""
-    return Mock()
-
-
-@pytest.fixture
-def valid_factory_params():
-    """Fixture providing valid parameters for RequestFactory initialization."""
-    return {
-        "model": "deepseek-r1",
-        "url": "/v1/chat/completions",
-        "prompt": "You are a helpful assistant for question tagging.",
-        "logger": Mock()
-    }
-
-
-@pytest.fixture
-def sample_question_text_only():
-    """Fixture providing a text-only Question object for testing."""
-    pass  # Implementation to be added
-
-
-@pytest.fixture
-def sample_question_with_image():
-    """Fixture providing a Question object with an image for testing."""
-    pass  # Implementation to be added
-
-
-@pytest.fixture
-def sample_question_with_invalid_image():
-    """Fixture providing a Question object with invalid image path for testing."""
-    pass  # Implementation to be added
 
 
 class TestRequestFactoryInitialization:
@@ -101,15 +57,15 @@ class TestMakeRequestMethod:
     """Test suite for the make_request public method."""
 
     def test_make_request_text_only_question_success(self, valid_factory_params, sample_question_text_only):
-        """Test that make_request creates a valid LabelingRequest for text-only questions."""
+        """Test that make_request creates a valid BasicLabelingRequest for text-only questions."""
         pass
 
     def test_make_request_question_with_image_success(self, valid_factory_params, sample_question_with_image):
-        """Test that make_request creates a valid LabelingRequest for questions with images."""
+        """Test that make_request creates a valid BasicLabelingRequest for questions with images."""
         pass
 
     def test_make_request_returns_correct_type(self, valid_factory_params, sample_question_text_only):
-        """Test that make_request returns a LabelingRequest instance."""
+        """Test that make_request returns a BasicLabelingRequest instance."""
         pass
 
     def test_make_request_uses_provided_custom_id(self, valid_factory_params, sample_question_text_only):
@@ -561,7 +517,7 @@ class TestRequestFactoryErrorHandling:
         pass
 
     def test_labeling_request_creation_failure(self, valid_factory_params):
-        """Test handling of failures during LabelingRequest object creation."""
+        """Test handling of failures during BasicLabelingRequest object creation."""
         pass
 
     def test_graceful_degradation_on_partial_failures(self, valid_factory_params):

@@ -1,7 +1,6 @@
-from label_generator.labeling_request import LabelingRequest
+from label_generator.basic_labeling_request import BasicLabelingRequest
 import pytest
 from pydantic import ValidationError
-
 
 # Test constants
 VALID_CUSTOM_ID = "test_request_001"
@@ -12,7 +11,8 @@ VALID_CONTENT = [{"type": "text", "text": "Test message"}]
 
 # URL validation constants
 VALID_URLS = ["/v1/chat/completions", "/v1/chat/ds-test", "/v1/embeddings"]
-INVALID_URLS = ["/v1/invalid", "/v2/chat/completions", "", "not-a-url", "/v1/chat"]
+INVALID_URLS = ["/v1/invalid", "/v2/chat/completions", "", "not-a-url",
+                "/v1/chat"]
 
 # Model mappings for URL compatibility
 URL_MODEL_MAPPING = {
@@ -40,7 +40,7 @@ UNICODE_TEST_DATA = {
 # Pytest fixtures for reusable test data
 @pytest.fixture
 def valid_request_data():
-    """Fixture providing valid data for creating a LabelingRequest."""
+    """Fixture providing valid data for creating a BasicLabelingRequest."""
     return {
         "custom_id": VALID_CUSTOM_ID,
         "url": VALID_URL,
@@ -51,10 +51,11 @@ def valid_request_data():
 
 
 class TestLabelingRequestValidation:
-    """Test suite for LabelingRequest field and model validation."""
+    """Test suite for BasicLabelingRequest field and model validation."""
 
     def _create_valid_request(self, **overrides):
-        """Helper method to create a valid LabelingRequest with optional field overrides."""
+        """Helper method to create a valid BasicLabelingRequest
+        ith optional field overrides."""
         data = {
             "custom_id": VALID_CUSTOM_ID,
             "url": VALID_URL,
@@ -63,18 +64,18 @@ class TestLabelingRequestValidation:
             "content": VALID_CONTENT
         }
         data.update(overrides)
-        return LabelingRequest(**data)
+        return BasicLabelingRequest(**data)
 
     def test_valid_labeling_request_creation(self, valid_request_data):
-        """Test creating a valid LabelingRequest with all required fields."""
-        request = LabelingRequest(**valid_request_data)
+        """Test creating a valid BasicLabelingRequest with all required
+        fields."""
+        request = BasicLabelingRequest(**valid_request_data)
 
         assert request.custom_id == VALID_CUSTOM_ID
         assert request.url == VALID_URL
         assert request.model == VALID_MODEL
         assert request.prompt == VALID_PROMPT
         assert request.content == VALID_CONTENT
-        assert request._method == "POST"
 
     def test_custom_id_validation_success(self):
         """Test that valid custom_id values are accepted."""
@@ -96,11 +97,12 @@ class TestUrlValidation:
     """Test suite for URL field validation."""
 
     def _create_request_with_url(self, url, model=None):
-        """Helper method to create a request with a specific URL and compatible model."""
+        """Helper method to create a request with a specific URL and
+        compatible model."""
         if model is None:
             model = URL_MODEL_MAPPING.get(url, VALID_MODEL)
 
-        return LabelingRequest(
+        return BasicLabelingRequest(
             custom_id=VALID_CUSTOM_ID,
             url=url,
             model=model,
@@ -132,7 +134,8 @@ class TestUrlValidation:
 
             # Check that the error is related to URL validation
             error_message = str(exc_info.value)
-            assert "URL must be one of" in error_message or "url" in error_message.lower()
+            assert ("URL must be one of" in error_message or "url"
+                    in error_message.lower())
 
 
 class TestModelValidation:
@@ -147,7 +150,7 @@ class TestModelValidation:
                 invalid_model = "deepseek-r1"
 
             with pytest.raises(ValidationError) as exc_info:
-                LabelingRequest(
+                BasicLabelingRequest(
                     custom_id=VALID_CUSTOM_ID,
                     url=url,
                     model=invalid_model,
@@ -163,7 +166,7 @@ class TestPromptValidation:
 
     def test_valid_prompt_accepted(self):
         """Test that valid non-empty prompt is accepted."""
-        request = LabelingRequest(
+        request = BasicLabelingRequest(
             custom_id=VALID_CUSTOM_ID,
             url=VALID_URL,
             model=VALID_MODEL,
@@ -178,7 +181,7 @@ class TestContentValidation:
 
     def test_valid_text_content_single_item(self):
         """Test that valid single text content item is accepted."""
-        request = LabelingRequest(
+        request = BasicLabelingRequest(
             custom_id=VALID_CUSTOM_ID,
             url=VALID_URL,
             model=VALID_MODEL,
@@ -189,7 +192,7 @@ class TestContentValidation:
 
     def test_valid_text_content_multiple_items(self):
         """Test that valid multiple text content items are accepted."""
-        request = LabelingRequest(
+        request = BasicLabelingRequest(
             custom_id=VALID_CUSTOM_ID,
             url=VALID_URL,
             model=VALID_MODEL,
@@ -206,18 +209,19 @@ class TestContentValidation:
 
     def test_valid_image_content_single_item(self):
         """Test that valid single image content item is accepted."""
-        request = LabelingRequest(
+        request = BasicLabelingRequest(
             custom_id=VALID_CUSTOM_ID,
             url=VALID_URL,
             model=VALID_MODEL,
             prompt=VALID_PROMPT,
             content=[{"type": "image", "image": "http://example.com/image.png"}]
         )
-        assert request.content == [{"type": "image", "image": "http://example.com/image.png"}]
+        assert request.content == [
+            {"type": "image", "image": "http://example.com/image.png"}]
 
     def test_valid_mixed_content_text_and_image(self):
         """Test that valid mixed text and image content is accepted."""
-        request = LabelingRequest(
+        request = BasicLabelingRequest(
             custom_id=VALID_CUSTOM_ID,
             url=VALID_URL,
             model=VALID_MODEL,
@@ -235,7 +239,7 @@ class TestContentValidation:
     def test_content_item_without_type_key_raises_value_error(self):
         """Test that content item missing 'type' key raises ValueError."""
         with pytest.raises(ValidationError) as exc_info:
-            LabelingRequest(
+            BasicLabelingRequest(
                 custom_id=VALID_CUSTOM_ID,
                 url=VALID_URL,
                 model=VALID_MODEL,
@@ -248,7 +252,7 @@ class TestContentValidation:
     def test_content_item_with_invalid_type_raises_value_error(self):
         """Test that content item with invalid type raises ValueError."""
         with pytest.raises(ValidationError) as exc_info:
-            LabelingRequest(
+            BasicLabelingRequest(
                 custom_id=VALID_CUSTOM_ID,
                 url=VALID_URL,
                 model=VALID_MODEL,
@@ -261,7 +265,7 @@ class TestContentValidation:
     def test_content_item_with_wrong_number_of_keys_raises_value_error(self):
         """Test that content item with != 2 keys raises ValueError."""
         with pytest.raises(ValidationError) as exc_info:
-            LabelingRequest(
+            BasicLabelingRequest(
                 custom_id=VALID_CUSTOM_ID,
                 url=VALID_URL,
                 model=VALID_MODEL,
@@ -274,7 +278,7 @@ class TestContentValidation:
     def test_text_content_without_text_key_raises_value_error(self):
         """Test that text content without 'text' key raises ValueError."""
         with pytest.raises(ValidationError) as exc_info:
-            LabelingRequest(
+            BasicLabelingRequest(
                 custom_id=VALID_CUSTOM_ID,
                 url=VALID_URL,
                 model=VALID_MODEL,
@@ -287,7 +291,7 @@ class TestContentValidation:
     def test_image_content_without_image_key_raises_value_error(self):
         """Test that image content without 'image' key raises ValueError."""
         with pytest.raises(ValidationError) as exc_info:
-            LabelingRequest(
+            BasicLabelingRequest(
                 custom_id=VALID_CUSTOM_ID,
                 url=VALID_URL,
                 model=VALID_MODEL,
@@ -303,7 +307,7 @@ class TestModelUrlCompatibility:
 
     def _create_request_with_model_url(self, url, model):
         """Helper method to create a request with specific model and URL."""
-        return LabelingRequest(
+        return BasicLabelingRequest(
             custom_id=VALID_CUSTOM_ID,
             url=url,
             model=model,
@@ -312,35 +316,43 @@ class TestModelUrlCompatibility:
         )
 
     def test_deepseek_models_compatible_with_chat_completions(self):
-        """Test that all deepseek models are compatible with /v1/chat/completions."""
+        """Test that all deepseek models are compatible with
+        /v1/chat/completions."""
         deepseek_models = ["deepseek-r1", "deepseek-v3"]
 
         for model in deepseek_models:
-            request = self._create_request_with_model_url("/v1/chat/completions", model)
+            request = self._create_request_with_model_url(
+                "/v1/chat/completions", model)
             assert request.model == model
             assert request.url == "/v1/chat/completions"
 
     def test_qwen_models_compatible_with_chat_completions(self):
-        """Test that all qwen models are compatible with /v1/chat/completions."""
+        """Test that all qwen models are compatible with
+        /v1/chat/completions."""
         qwen_models = ["qwen-max", "qwen-plus", "qwen-turbo", "qwen-vl-max"]
 
         for model in qwen_models:
-            request = self._create_request_with_model_url("/v1/chat/completions", model)
+            request = self._create_request_with_model_url(
+                "/v1/chat/completions", model)
             assert request.model == model
             assert request.url == "/v1/chat/completions"
 
     def test_batch_test_model_compatible_with_ds_test(self):
         """Test that batch-test-model is compatible with /v1/chat/ds-test."""
-        request = self._create_request_with_model_url("/v1/chat/ds-test", "batch-test-model")
+        request = self._create_request_with_model_url("/v1/chat/ds-test",
+                                                      "batch-test-model")
         assert request.model == "batch-test-model"
         assert request.url == "/v1/chat/ds-test"
 
     def test_embedding_models_compatible_with_embeddings_url(self):
-        """Test that text-embedding models are compatible with /v1/embeddings."""
-        embedding_models = ["text-embedding-v1", "text-embedding-v2", "text-embedding-v3", "text-embedding-v4"]
+        """Test that text-embedding models are compatible with
+        /v1/embeddings."""
+        embedding_models = ["text-embedding-v1", "text-embedding-v2",
+                            "text-embedding-v3", "text-embedding-v4"]
 
         for model in embedding_models:
-            request = self._create_request_with_model_url("/v1/embeddings", model)
+            request = self._create_request_with_model_url("/v1/embeddings",
+                                                          model)
             assert request.model == model
             assert request.url == "/v1/embeddings"
 
@@ -370,10 +382,10 @@ class TestModelUrlCompatibility:
 
 
 class TestLabelingRequestMethods:
-    """Test suite for LabelingRequest methods."""
+    """Test suite for BasicLabelingRequest methods."""
 
     def _create_test_request(self, **overrides):
-        """Helper method to create a LabelingRequest for method testing."""
+        """Helper method to create a BasicLabelingRequest for method testing."""
         data = {
             "custom_id": VALID_CUSTOM_ID,
             "url": VALID_URL,
@@ -382,7 +394,7 @@ class TestLabelingRequestMethods:
             "content": VALID_CONTENT
         }
         data.update(overrides)
-        return LabelingRequest(**data)
+        return BasicLabelingRequest(**data)
 
     def _parse_json_output(self, request):
         """Helper method to parse JSON output from to_request method."""
@@ -458,7 +470,8 @@ class TestLabelingRequestMethods:
         """Test that to_request handles unicode characters correctly."""
         unicode_data = {
             "custom_id": "测试_001",  # Chinese characters
-            "prompt": "Bonjour! Comment ça va? 你好！🌟",  # French + Chinese + emoji
+            "prompt": "Bonjour! Comment ça va? 你好！🌟",
+            # French + Chinese + emoji
             "content": [{"type": "text", "text": "测试内容 with émojis 🚀✨"}]
         }
 
@@ -468,8 +481,10 @@ class TestLabelingRequestMethods:
 
         # Verify unicode characters are preserved
         assert parsed_output["custom_id"] == unicode_data["custom_id"]
-        assert parsed_output["body"]["messages"][0]["content"] == unicode_data["prompt"]
-        assert parsed_output["body"]["messages"][1]["content"] == unicode_data["content"]
+        assert parsed_output["body"]["messages"][0]["content"] == unicode_data[
+            "prompt"]
+        assert parsed_output["body"]["messages"][1]["content"] == unicode_data[
+            "content"]
 
         # Verify the string contains unicode characters (not escaped)
         assert "测试" in json_output
@@ -481,7 +496,7 @@ class TestLabelingRequestEdgeCases:
 
     def test_special_characters_in_fields(self):
         """Test handling of special characters in various fields."""
-        request = LabelingRequest(
+        request = BasicLabelingRequest(
             custom_id=VALID_CUSTOM_ID,
             url=VALID_URL,
             model=VALID_MODEL,
@@ -510,7 +525,8 @@ class TestLabelingRequestSerialization:
     """Test suite for JSON serialization and deserialization."""
 
     def _create_test_request(self, **overrides):
-        """Helper method to create a LabelingRequest for serialization testing."""
+        """Helper method to create a BasicLabelingRequest for serialization
+        testing."""
         data = {
             "custom_id": VALID_CUSTOM_ID,
             "url": VALID_URL,
@@ -519,7 +535,7 @@ class TestLabelingRequestSerialization:
             "content": VALID_CONTENT
         }
         data.update(overrides)
-        return LabelingRequest(**data)
+        return BasicLabelingRequest(**data)
 
     def test_json_output_is_valid_json(self):
         """Test that to_request output is valid JSON that can be parsed."""
@@ -549,36 +565,29 @@ class TestLabelingRequestIntegration:
     """Test suite for integration scenarios."""
 
     def _create_sample_requests(self):
-        """Helper method to create multiple sample requests for integration testing."""
-        requests = []
-
-        # Chat completion request
-        requests.append(LabelingRequest(
+        """Helper method to create multiple sample requests for integration
+        testing."""
+        requests = [BasicLabelingRequest(
             custom_id="chat_001",
             url="/v1/chat/completions",
             model="deepseek-r1",
             prompt="You are a helpful assistant for image analysis.",
-            content=[{"type": "text", "text": "Analyze this image for safety concerns."}]
-        ))
-
-        # Embedding request
-        requests.append(LabelingRequest(
+            content=[{"type": "text",
+                      "text": "Analyze this image for safety concerns."}]
+        ), BasicLabelingRequest(
             custom_id="embed_001",
             url="/v1/embeddings",
             model="text-embedding-v1",
             prompt="Generate embeddings for this text.",
-            content=[{"type": "text", "text": "Sample text for embedding generation."}]
-        ))
-
-        # DS test request
-        requests.append(LabelingRequest(
+            content=[{"type": "text",
+                      "text": "Sample text for embedding generation."}]
+        ), BasicLabelingRequest(
             custom_id="test_001",
             url="/v1/chat/ds-test",
             model="batch-test-model",
             prompt="Test prompt for batch processing.",
             content=[{"type": "text", "text": "Test content for validation."}]
-        ))
-
+        )]
         return requests
 
     def test_request_creation_workflow_end_to_end(self):
@@ -588,15 +597,16 @@ class TestLabelingRequestIntegration:
             "custom_id": "workflow_test_001",
             "url": "/v1/chat/completions",
             "model": "qwen-max",
-            "prompt": "You are an AI assistant that analyzes images for content moderation.",
+            "prompt": "You are an AI assistant that analyzes images for "
+                      "content moderation.",
             "content": [
                 {"type": "text", "text": "Please analyze this image"},
                 {"type": "image", "image": "https://example.com/test_image.jpg"}
             ]
         }
 
-        # Step 2: Create LabelingRequest instance
-        request = LabelingRequest(**request_data)
+        # Step 2: Create BasicLabelingRequest instance
+        request = BasicLabelingRequest(**request_data)
 
         # Step 3: Verify all fields are correctly set
         assert request.custom_id == request_data["custom_id"]
@@ -604,7 +614,6 @@ class TestLabelingRequestIntegration:
         assert request.model == request_data["model"]
         assert request.prompt == request_data["prompt"]
         assert request.content == request_data["content"]
-        assert request._method == "POST"
 
         # Step 4: Generate JSON output
         json_output = request.to_request()

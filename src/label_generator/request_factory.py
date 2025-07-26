@@ -3,7 +3,8 @@ from logging import Logger
 from typing import Dict, List, Set
 
 from entities.question import Question
-from label_generator.labeling_request import LabelingRequest
+from label_generator.labeling_request_interface import LabelingRequest
+from label_generator.basic_labeling_request import BasicLabelingRequest
 
 
 class RequestFactory:
@@ -32,11 +33,11 @@ class RequestFactory:
         """
         self._logger.debug(f"Creating request")
 
-        request = LabelingRequest(custom_id=custom_id,
-                                  model=self._model,
-                                  url=self._url,
-                                  prompt=self._prompt,
-                                  content=self._make_content(question))
+        request = BasicLabelingRequest(custom_id=custom_id,
+                                       model=self._model,
+                                       url=self._url,
+                                       prompt=self._prompt,
+                                       content=self._make_content(question))
 
         self._logger.debug(f"Successfully created request for question "
                            f"{question.get_qid()}")
@@ -95,8 +96,8 @@ class RequestFactory:
         self._logger.debug("Converting question to dictionary format")
         try:
             dict_question = {
-                "章节": f"{question.get_chapter()[0]}: "
-                        f"{question.get_chapter()[1]}",
+                "章节":
+                    f"{question.get_chapter()[0]}: {question.get_chapter()[1]}",
                 "题目": question.get_question(),
                 "选项": self._assign_letter_codes(question.get_answers()),
                 "答案": question.get_correct_answer()

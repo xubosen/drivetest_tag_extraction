@@ -1,7 +1,8 @@
 from typing import List
 from pydantic import BaseModel, Field
 
-from label_generator.labeling_request import LabelingRequest
+from label_generator.labeling_request_interface import LabelingRequest
+
 
 class LabelingBatchRequest(BaseModel):
     """Pydantic model for a labeling batch request entry."""
@@ -25,7 +26,6 @@ class LabelingBatchRequest(BaseModel):
                 file.write(self.to_batch_jsonl())
         except Exception as e:
             raise IOError(f"Failed to write to file {file_path}: {e}")
-
 
     class Config:
         """Pydantic configuration for the LabelingBatchRequest."""

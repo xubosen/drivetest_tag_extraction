@@ -1,5 +1,5 @@
 from label_generator.batch_request import LabelingBatchRequest
-from label_generator.labeling_request import LabelingRequest
+from label_generator.basic_labeling_request import BasicLabelingRequest
 import pytest
 import tempfile
 import os
@@ -64,8 +64,8 @@ def cleanup_test_file(file_path: str) -> None:
         pass  # Ignore cleanup errors in tests
 
 
-def create_sample_labeling_request(custom_id: str = VALID_CUSTOM_ID_1, **overrides) -> LabelingRequest:
-    """Helper function to create a LabelingRequest with optional overrides."""
+def create_sample_labeling_request(custom_id: str = VALID_CUSTOM_ID_1, **overrides) -> BasicLabelingRequest:
+    """Helper function to create a BasicLabelingRequest with optional overrides."""
     data = {
         "custom_id": custom_id,
         "url": VALID_URL,
@@ -74,14 +74,14 @@ def create_sample_labeling_request(custom_id: str = VALID_CUSTOM_ID_1, **overrid
         "content": VALID_CONTENT
     }
     data.update(overrides)
-    return LabelingRequest(**data)
+    return BasicLabelingRequest(**data)
 
 
 # Pytest fixtures for reusable test data
 @pytest.fixture
 def valid_labeling_request():
-    """Fixture providing a valid LabelingRequest instance."""
-    return LabelingRequest(
+    """Fixture providing a valid BasicLabelingRequest instance."""
+    return BasicLabelingRequest(
         custom_id=VALID_CUSTOM_ID_1,
         url=VALID_URL,
         model=VALID_MODEL,
@@ -92,23 +92,23 @@ def valid_labeling_request():
 
 @pytest.fixture
 def multiple_valid_requests():
-    """Fixture providing multiple valid LabelingRequest instances."""
+    """Fixture providing multiple valid BasicLabelingRequest instances."""
     return [
-        LabelingRequest(
+        BasicLabelingRequest(
             custom_id=VALID_CUSTOM_ID_1,
             url=VALID_URL,
             model=VALID_MODEL,
             prompt=VALID_PROMPT,
             content=[{"type": "text", "text": "First test message"}]
         ),
-        LabelingRequest(
+        BasicLabelingRequest(
             custom_id=VALID_CUSTOM_ID_2,
             url=VALID_URL,
             model=VALID_MODEL,
             prompt=VALID_PROMPT,
             content=[{"type": "text", "text": "Second test message"}]
         ),
-        LabelingRequest(
+        BasicLabelingRequest(
             custom_id=VALID_CUSTOM_ID_3,
             url="/v1/embeddings",
             model="text-embedding-v1",
@@ -122,21 +122,21 @@ def multiple_valid_requests():
 def mixed_content_requests():
     """Fixture providing requests with mixed content types."""
     return [
-        LabelingRequest(
+        BasicLabelingRequest(
             custom_id="text_only_001",
             url=VALID_URL,
             model=VALID_MODEL,
             prompt=VALID_PROMPT,
             content=[{"type": "text", "text": "Text only content"}]
         ),
-        LabelingRequest(
+        BasicLabelingRequest(
             custom_id="image_only_001",
             url=VALID_URL,
             model=VALID_MODEL,
             prompt=VALID_PROMPT,
             content=[{"type": "image", "image": "http://example.com/image.jpg"}]
         ),
-        LabelingRequest(
+        BasicLabelingRequest(
             custom_id="mixed_content_001",
             url=VALID_URL,
             model=VALID_MODEL,
@@ -159,7 +159,7 @@ class TestLabelingBatchRequestCreation:
         return LabelingBatchRequest(requests=requests)
 
     def _create_sample_request(self, custom_id=VALID_CUSTOM_ID_1, **overrides):
-        """Helper method to create a sample LabelingRequest with optional overrides."""
+        """Helper method to create a sample BasicLabelingRequest with optional overrides."""
         data = {
             "custom_id": custom_id,
             "url": VALID_URL,
@@ -168,7 +168,7 @@ class TestLabelingBatchRequestCreation:
             "content": VALID_CONTENT
         }
         data.update(overrides)
-        return LabelingRequest(**data)
+        return BasicLabelingRequest(**data)
 
     def test_empty_batch_request_creation(self):
         """Test creating an empty LabelingBatchRequest with default values."""
@@ -183,13 +183,13 @@ class TestLabelingBatchRequestCreation:
         assert hasattr(batch_request, 'requests')
 
     def test_batch_request_creation_with_single_request(self, valid_labeling_request):
-        """Test creating a LabelingBatchRequest with a single LabelingRequest."""
+        """Test creating a LabelingBatchRequest with a single BasicLabelingRequest."""
         batch_request = self._create_valid_batch_request([valid_labeling_request])
 
         # Should contain exactly one request
         assert len(batch_request.requests) == 1
         assert batch_request.requests[0] == valid_labeling_request
-        assert isinstance(batch_request.requests[0], LabelingRequest)
+        assert isinstance(batch_request.requests[0], BasicLabelingRequest)
 
         # Verify the request attributes are preserved
         request = batch_request.requests[0]
@@ -198,16 +198,16 @@ class TestLabelingBatchRequestCreation:
         assert request.model == VALID_MODEL
 
     def test_batch_request_creation_with_multiple_requests(self, multiple_valid_requests):
-        """Test creating a LabelingBatchRequest with multiple LabelingRequest objects."""
+        """Test creating a LabelingBatchRequest with multiple BasicLabelingRequest objects."""
         batch_request = self._create_valid_batch_request(multiple_valid_requests)
 
         # Should contain all requests in correct order
         assert len(batch_request.requests) == 3
         assert batch_request.requests == multiple_valid_requests
 
-        # Verify each request is a LabelingRequest instance
+        # Verify each request is a BasicLabelingRequest instance
         for request in batch_request.requests:
-            assert isinstance(request, LabelingRequest)
+            assert isinstance(request, BasicLabelingRequest)
 
         # Verify specific requests
         assert batch_request.requests[0].custom_id == VALID_CUSTOM_ID_1
@@ -246,7 +246,7 @@ class TestLabelingBatchRequestCreation:
         assert mixed_request.content[1]["type"] == "image"
 
     def test_batch_request_validation_with_invalid_request_type(self):
-        """Test that validation fails when non-LabelingRequest objects are added to requests."""
+        """Test that validation fails when non-BasicLabelingRequest objects are added to requests."""
         # Test various invalid types
         for invalid_request in INVALID_REQUEST_TYPES:
             with pytest.raises(ValidationError) as exc_info:
@@ -312,7 +312,7 @@ class TestLabelingBatchRequestModification:
         return LabelingBatchRequest(requests=requests)
 
     def _create_sample_request(self, custom_id=VALID_CUSTOM_ID_1, **overrides):
-        """Helper method to create a sample LabelingRequest with optional overrides."""
+        """Helper method to create a sample BasicLabelingRequest with optional overrides."""
         data = {
             "custom_id": custom_id,
             "url": VALID_URL,
@@ -321,7 +321,7 @@ class TestLabelingBatchRequestModification:
             "content": VALID_CONTENT
         }
         data.update(overrides)
-        return LabelingRequest(**data)
+        return BasicLabelingRequest(**data)
 
     def test_add_request_to_empty_batch(self, valid_labeling_request):
         """Test adding a request to an initially empty batch."""
@@ -336,7 +336,7 @@ class TestLabelingBatchRequestModification:
         # Verify request was added successfully
         assert len(batch_request.requests) == 1
         assert batch_request.requests[0] == valid_labeling_request
-        assert isinstance(batch_request.requests[0], LabelingRequest)
+        assert isinstance(batch_request.requests[0], BasicLabelingRequest)
 
         # Verify request attributes are preserved
         request = batch_request.requests[0]
@@ -441,7 +441,7 @@ class TestToBatchJsonlMethod:
         return LabelingBatchRequest(requests=requests)
 
     def _create_sample_request(self, custom_id=VALID_CUSTOM_ID_1, **overrides):
-        """Helper method to create a sample LabelingRequest with optional overrides."""
+        """Helper method to create a sample BasicLabelingRequest with optional overrides."""
         data = {
             "custom_id": custom_id,
             "url": VALID_URL,
@@ -450,7 +450,7 @@ class TestToBatchJsonlMethod:
             "content": VALID_CONTENT
         }
         data.update(overrides)
-        return LabelingRequest(**data)
+        return BasicLabelingRequest(**data)
 
     def _parse_jsonl_lines(self, jsonl_output):
         """Helper method to parse JSONL output into individual JSON objects."""
@@ -665,7 +665,7 @@ class TestToJsonlFileMethod:
 
     def test_to_jsonl_file_unicode_encoding_utf8(self):
         """Test that to_jsonl_file properly handles unicode characters with UTF-8 encoding."""
-        unicode_request = LabelingRequest(
+        unicode_request = BasicLabelingRequest(
             custom_id="unicode_test",
             url=VALID_URL,
             model=VALID_MODEL,
@@ -809,7 +809,7 @@ class TestLabelingBatchRequestValidation:
         batch_request = LabelingBatchRequest(requests=[valid_labeling_request])
         assert len(batch_request.requests) == 1
 
-        # Test that we can assign valid LabelingRequest objects after creation
+        # Test that we can assign valid BasicLabelingRequest objects after creation
         new_request = create_sample_labeling_request("validation_test_001")
         batch_request.requests = [new_request]
         assert len(batch_request.requests) == 1
@@ -842,17 +842,17 @@ class TestLabelingBatchRequestValidation:
             batch_request.extra_attribute = "should_fail"
 
     def test_pydantic_arbitrary_types_allowed(self):
-        """Test that arbitrary_types_allowed configuration works for LabelingRequest objects."""
-        # Create LabelingRequest objects (which are custom types)
+        """Test that arbitrary_types_allowed configuration works for BasicLabelingRequest objects."""
+        # Create BasicLabelingRequest objects (which are custom types)
         request1 = create_sample_labeling_request("arbitrary_test_001")
         request2 = create_sample_labeling_request("arbitrary_test_002")
 
-        # Test that custom LabelingRequest objects are accepted
+        # Test that custom BasicLabelingRequest objects are accepted
         batch_request = LabelingBatchRequest(requests=[request1, request2])
 
         assert len(batch_request.requests) == 2
-        assert isinstance(batch_request.requests[0], LabelingRequest)
-        assert isinstance(batch_request.requests[1], LabelingRequest)
+        assert isinstance(batch_request.requests[0], BasicLabelingRequest)
+        assert isinstance(batch_request.requests[1], BasicLabelingRequest)
         assert batch_request.requests[0].custom_id == "arbitrary_test_001"
         assert batch_request.requests[1].custom_id == "arbitrary_test_002"
 
