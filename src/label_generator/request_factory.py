@@ -5,6 +5,7 @@ from typing import Dict, List, Set
 from entities.question import Question
 from label_generator.labeling_request import LabelingRequest
 
+
 class RequestFactory:
     """
     A factory class to create labeling requests for individual questions.
@@ -38,22 +39,22 @@ class RequestFactory:
                                   content=self._make_content(question))
 
         self._logger.debug(f"Successfully created request for question "
-                          f"{question.get_qid()}")
+                           f"{question.get_qid()}")
         return request
 
     def _make_content(self, question: Question) -> List[Dict[str, str]]:
         if question.has_img():
             self._logger.debug(f"Processing question with image: "
-                              f"{question.get_img_path()}")
+                               f"{question.get_img_path()}")
             output = [{"type": "image",
                        "image": self._format_image(question.get_img_path())},
                       {"type": "text",
-                      "text": self._format_text(question)}]
+                       "text": self._format_text(question)}]
         else:
             self._logger.debug("Processing text-only question")
-            output=[{"type": "text", "text": self._format_text(question)}]
+            output = [{"type": "text", "text": self._format_text(question)}]
         self._logger.debug(f"Successfully formatted content for question "
-                          f"{question.get_qid()}")
+                           f"{question.get_qid()}")
         return output
 
     def _format_text(self, question: Question) -> str:
@@ -65,7 +66,6 @@ class RequestFactory:
         """
         self._logger.debug("Formatting question text")
         return str(self._question_to_dict(question))
-
 
     def _format_image(self, img_path: str) -> str:
         """
@@ -81,7 +81,7 @@ class RequestFactory:
                     image_file.read()
                 ).decode('utf-8')
                 self._logger.debug(f"Successfully encoded image: {img_path} "
-                                  f"(size: {len(encoded_image)} chars)")
+                                   f"(size: {len(encoded_image)} chars)")
                 return f"data:image/jpeg;base64,{encoded_image}"
         except Exception as e:
             error_msg = f"Failed to encode image {img_path}: {str(e)}"
@@ -102,7 +102,7 @@ class RequestFactory:
                 "答案": question.get_correct_answer()
             }
             self._logger.debug(f"Question converted to dict with "
-                              f"{len(dict_question['选项'])} answer choices")
+                               f"{len(dict_question['选项'])} answer choices")
             return dict_question
         except Exception as e:
             error_msg = (f"Failed to convert question {question.get_qid()}: "
@@ -115,7 +115,7 @@ class RequestFactory:
         Assigns letter codes (A, B, C, ...) to the answer choices.
         """
         self._logger.debug(f"Assigning letter codes to {len(answer_choices)} "
-                          f"answer choices")
+                           f"answer choices")
 
         answer_choices_lst = sorted(list(answer_choices))
         lettered_choices = {}

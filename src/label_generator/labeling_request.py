@@ -2,6 +2,7 @@ import json
 from typing import List, Dict
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+REQUEST_METHOD_FIELD = "POST"
 URL_TO_MODELS = {
     "/v1/chat/ds-test": {"batch-test-model"},
     "/v1/chat/completions": {'deepseek-r1',
@@ -26,9 +27,9 @@ URL_TO_MODELS = {
                        "text-embedding-v4"}
 }
 
+
 class LabelingRequest(BaseModel):
     custom_id: str = Field(..., min_length=1)
-    _method: str = "POST"
     url: str = Field(..., description="URL for the request")
     model: str = Field(..., min_length=1,
                        description="Model to use for the request")
@@ -39,7 +40,7 @@ class LabelingRequest(BaseModel):
 
     @field_validator("url", mode="after")
     @classmethod
-    def validate_url(cls, url:str) -> str:
+    def validate_url(cls, url: str) -> str:
         if url not in URL_TO_MODELS.keys():
             raise ValueError(f"URL must be one of {URL_TO_MODELS.keys()}")
         return url
@@ -83,7 +84,7 @@ class LabelingRequest(BaseModel):
         """
         json_dict = {
             "custom_id": self.custom_id,
-            "method": self._method,
+            "method": REQUEST_METHOD_FIELD,
             "url": self.url,
             "body": {
                 "model": self.model,
@@ -94,6 +95,7 @@ class LabelingRequest(BaseModel):
             }
         }
         return json.dumps(json_dict, ensure_ascii=False)
+
 
 class Config:
     validate_assignment = True
