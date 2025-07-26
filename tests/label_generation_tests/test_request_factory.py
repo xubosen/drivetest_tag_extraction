@@ -8,49 +8,53 @@ class TestRequestFactoryInitialization:
         """Test that RequestFactory initializes correctly with valid parameters."""
         pass
 
-    def test_initialization_stores_model_parameter(self, valid_factory_params):
-        """Test that the model parameter is correctly stored during initialization."""
-        pass
+    # REDUNDANT: Individual parameter storage tests are unnecessary since they test implementation details
+    # rather than behavior. The valid initialization test covers this adequately.
+    # def test_initialization_stores_model_parameter(self, valid_factory_params):
+    #     """Test that the model parameter is correctly stored during initialization."""
+    #     pass
 
-    def test_initialization_stores_url_parameter(self, valid_factory_params):
-        """Test that the URL parameter is correctly stored during initialization."""
-        pass
+    # def test_initialization_stores_url_parameter(self, valid_factory_params):
+    #     """Test that the URL parameter is correctly stored during initialization."""
+    #     pass
 
-    def test_initialization_stores_prompt_parameter(self, valid_factory_params):
-        """Test that the prompt parameter is correctly stored during initialization."""
-        pass
+    # def test_initialization_stores_prompt_parameter(self, valid_factory_params):
+    #     """Test that the prompt parameter is correctly stored during initialization."""
+    #     pass
 
-    def test_initialization_stores_logger_parameter(self, valid_factory_params):
-        """Test that the logger parameter is correctly stored during initialization."""
-        pass
+    # def test_initialization_stores_logger_parameter(self, valid_factory_params):
+    #     """Test that the logger parameter is correctly stored during initialization."""
+    #     pass
 
-    def test_initialization_with_none_model_fails(self, valid_factory_params):
-        """Test that initialization fails when model parameter is None."""
-        pass
+    # UNNECESSARY: RequestFactory constructor doesn't validate inputs - validation happens in BasicLabelingRequest
+    # These tests would pass regardless since the factory just stores the values
+    # def test_initialization_with_none_model_fails(self, valid_factory_params):
+    #     """Test that initialization fails when model parameter is None."""
+    #     pass
 
-    def test_initialization_with_empty_string_model_fails(self, valid_factory_params):
-        """Test that initialization fails when model parameter is empty string."""
-        pass
+    # def test_initialization_with_empty_string_model_fails(self, valid_factory_params):
+    #     """Test that initialization fails when model parameter is empty string."""
+    #     pass
 
-    def test_initialization_with_none_url_fails(self, valid_factory_params):
-        """Test that initialization fails when URL parameter is None."""
-        pass
+    # def test_initialization_with_none_url_fails(self, valid_factory_params):
+    #     """Test that initialization fails when URL parameter is None."""
+    #     pass
 
-    def test_initialization_with_empty_string_url_fails(self, valid_factory_params):
-        """Test that initialization fails when URL parameter is empty string."""
-        pass
+    # def test_initialization_with_empty_string_url_fails(self, valid_factory_params):
+    #     """Test that initialization fails when URL parameter is empty string."""
+    #     pass
 
-    def test_initialization_with_none_prompt_fails(self, valid_factory_params):
-        """Test that initialization fails when prompt parameter is None."""
-        pass
+    # def test_initialization_with_none_prompt_fails(self, valid_factory_params):
+    #     """Test that initialization fails when prompt parameter is None."""
+    #     pass
 
-    def test_initialization_with_empty_string_prompt_fails(self, valid_factory_params):
-        """Test that initialization fails when prompt parameter is empty string."""
-        pass
+    # def test_initialization_with_empty_string_prompt_fails(self, valid_factory_params):
+    #     """Test that initialization fails when prompt parameter is empty string."""
+    #     pass
 
-    def test_initialization_with_none_logger_fails(self, valid_factory_params):
-        """Test that initialization fails when logger parameter is None."""
-        pass
+    # def test_initialization_with_none_logger_fails(self, valid_factory_params):
+    #     """Test that initialization fails when logger parameter is None."""
+    #     pass
 
 
 class TestMakeRequestMethod:
@@ -72,17 +76,19 @@ class TestMakeRequestMethod:
         """Test that make_request uses the provided custom_id in the returned request."""
         pass
 
-    def test_make_request_uses_factory_model(self, valid_factory_params, sample_question_text_only):
-        """Test that make_request uses the factory's model in the returned request."""
-        pass
+    # REDUNDANT: These tests duplicate validation that happens in BasicLabelingRequest tests
+    # The factory just passes these values through - testing them here is redundant
+    # def test_make_request_uses_factory_model(self, valid_factory_params, sample_question_text_only):
+    #     """Test that make_request uses the factory's model in the returned request."""
+    #     pass
 
-    def test_make_request_uses_factory_url(self, valid_factory_params, sample_question_text_only):
-        """Test that make_request uses the factory's URL in the returned request."""
-        pass
+    # def test_make_request_uses_factory_url(self, valid_factory_params, sample_question_text_only):
+    #     """Test that make_request uses the factory's URL in the returned request."""
+    #     pass
 
-    def test_make_request_uses_factory_prompt(self, valid_factory_params, sample_question_text_only):
-        """Test that make_request uses the factory's prompt in the returned request."""
-        pass
+    # def test_make_request_uses_factory_prompt(self, valid_factory_params, sample_question_text_only):
+    #     """Test that make_request uses the factory's prompt in the returned request."""
+    #     pass
 
     def test_make_request_with_none_question_fails(self, valid_factory_params):
         """Test that make_request fails when question parameter is None."""
@@ -96,17 +102,19 @@ class TestMakeRequestMethod:
         """Test that make_request fails when custom_id parameter is empty string."""
         pass
 
-    def test_make_request_logs_debug_messages(self, valid_factory_params, sample_question_text_only):
-        """Test that make_request logs appropriate debug messages during execution."""
-        pass
+    # UNNECESSARY: Testing logging behavior is implementation detail and makes tests fragile
+    # def test_make_request_logs_debug_messages(self, valid_factory_params, sample_question_text_only):
+    #     """Test that make_request logs appropriate debug messages during execution."""
+    #     pass
 
-    def test_make_request_with_special_characters_in_custom_id(self, valid_factory_params, sample_question_text_only):
-        """Test that make_request handles special characters in custom_id correctly."""
-        pass
+    # REDUNDANT: Custom ID validation is handled by BasicLabelingRequest - no need to test here
+    # def test_make_request_with_special_characters_in_custom_id(self, valid_factory_params, sample_question_text_only):
+    #     """Test that make_request handles special characters in custom_id correctly."""
+    #     pass
 
-    def test_make_request_with_unicode_custom_id(self, valid_factory_params, sample_question_text_only):
-        """Test that make_request handles unicode characters in custom_id correctly."""
-        pass
+    # def test_make_request_with_unicode_custom_id(self, valid_factory_params, sample_question_text_only):
+    #     """Test that make_request handles unicode characters in custom_id correctly."""
+    #     pass
 
 
 class TestMakeContentMethod:
@@ -116,45 +124,49 @@ class TestMakeContentMethod:
         """Test that _make_content returns correct structure for text-only questions."""
         pass
 
-    def test_make_content_text_only_question_single_item(self, valid_factory_params, sample_question_text_only):
-        """Test that _make_content returns single content item for text-only questions."""
-        pass
+    # REDUNDANT: Structure test covers the count and types
+    # def test_make_content_text_only_question_single_item(self, valid_factory_params, sample_question_text_only):
+    #     """Test that _make_content returns single content item for text-only questions."""
+    #     pass
 
-    def test_make_content_text_only_question_correct_type(self, valid_factory_params, sample_question_text_only):
-        """Test that _make_content returns text type for text-only questions."""
-        pass
+    # def test_make_content_text_only_question_correct_type(self, valid_factory_params, sample_question_text_only):
+    #     """Test that _make_content returns text type for text-only questions."""
+    #     pass
 
     def test_make_content_question_with_image_structure(self, valid_factory_params, sample_question_with_image):
         """Test that _make_content returns correct structure for questions with images."""
         pass
 
-    def test_make_content_question_with_image_two_items(self, valid_factory_params, sample_question_with_image):
-        """Test that _make_content returns two content items for questions with images."""
-        pass
+    # REDUNDANT: Structure test covers count, order, and types
+    # def test_make_content_question_with_image_two_items(self, valid_factory_params, sample_question_with_image):
+    #     """Test that _make_content returns two content items for questions with images."""
+    #     pass
 
-    def test_make_content_question_with_image_correct_order(self, valid_factory_params, sample_question_with_image):
-        """Test that _make_content returns image first, then text for questions with images."""
-        pass
+    # def test_make_content_question_with_image_correct_order(self, valid_factory_params, sample_question_with_image):
+    #     """Test that _make_content returns image first, then text for questions with images."""
+    #     pass
 
-    def test_make_content_question_with_image_correct_types(self, valid_factory_params, sample_question_with_image):
-        """Test that _make_content returns correct content types for questions with images."""
-        pass
+    # def test_make_content_question_with_image_correct_types(self, valid_factory_params, sample_question_with_image):
+    #     """Test that _make_content returns correct content types for questions with images."""
+    #     pass
 
-    def test_make_content_logs_debug_messages_text_only(self, valid_factory_params, sample_question_text_only):
-        """Test that _make_content logs appropriate debug messages for text-only questions."""
-        pass
+    # UNNECESSARY: Testing logging is implementation detail
+    # def test_make_content_logs_debug_messages_text_only(self, valid_factory_params, sample_question_text_only):
+    #     """Test that _make_content logs appropriate debug messages for text-only questions."""
+    #     pass
 
-    def test_make_content_logs_debug_messages_with_image(self, valid_factory_params, sample_question_with_image):
-        """Test that _make_content logs appropriate debug messages for questions with images."""
-        pass
+    # def test_make_content_logs_debug_messages_with_image(self, valid_factory_params, sample_question_with_image):
+    #     """Test that _make_content logs appropriate debug messages for questions with images."""
+    #     pass
 
-    def test_make_content_calls_format_text_method(self, valid_factory_params, sample_question_text_only):
-        """Test that _make_content calls _format_text method for text content."""
-        pass
+    # UNNECESSARY: Testing internal method calls is implementation detail - behavior testing is sufficient
+    # def test_make_content_calls_format_text_method(self, valid_factory_params, sample_question_text_only):
+    #     """Test that _make_content calls _format_text method for text content."""
+    #     pass
 
-    def test_make_content_calls_format_image_method(self, valid_factory_params, sample_question_with_image):
-        """Test that _make_content calls _format_image method for image content."""
-        pass
+    # def test_make_content_calls_format_image_method(self, valid_factory_params, sample_question_with_image):
+    #     """Test that _make_content calls _format_image method for image content."""
+    #     pass
 
 
 class TestFormatTextMethod:
@@ -164,17 +176,20 @@ class TestFormatTextMethod:
         """Test that _format_text returns a string representation."""
         pass
 
-    def test_format_text_calls_question_to_dict(self, valid_factory_params, sample_question_text_only):
-        """Test that _format_text calls _question_to_dict method."""
-        pass
+    # UNNECESSARY: Testing internal method calls is implementation detail
+    # def test_format_text_calls_question_to_dict(self, valid_factory_params, sample_question_text_only):
+    #     """Test that _format_text calls _question_to_dict method."""
+    #     pass
 
-    def test_format_text_logs_debug_message(self, valid_factory_params, sample_question_text_only):
-        """Test that _format_text logs appropriate debug message."""
-        pass
+    # UNNECESSARY: Testing logging is implementation detail
+    # def test_format_text_logs_debug_message(self, valid_factory_params, sample_question_text_only):
+    #     """Test that _format_text logs appropriate debug message."""
+    #     pass
 
-    def test_format_text_converts_dict_to_string(self, valid_factory_params, sample_question_text_only):
-        """Test that _format_text converts dictionary result to string."""
-        pass
+    # REDUNDANT: Covered by returns_string test
+    # def test_format_text_converts_dict_to_string(self, valid_factory_params, sample_question_text_only):
+    #     """Test that _format_text converts dictionary result to string."""
+    #     pass
 
     def test_format_text_with_none_question_fails(self, valid_factory_params):
         """Test that _format_text fails when question parameter is None."""
@@ -184,9 +199,10 @@ class TestFormatTextMethod:
         """Test that _format_text correctly handles unicode characters in question data."""
         pass
 
-    def test_format_text_handles_special_characters(self, valid_factory_params):
-        """Test that _format_text correctly handles special characters in question data."""
-        pass
+    # REDUNDANT: Unicode test should cover special characters as well
+    # def test_format_text_handles_special_characters(self, valid_factory_params):
+    #     """Test that _format_text correctly handles special characters in question data."""
+    #     pass
 
 
 class TestFormatImageMethod:
@@ -200,29 +216,33 @@ class TestFormatImageMethod:
         """Test that _format_image returns image in data URL format."""
         pass
 
-    def test_format_image_includes_base64_prefix(self, valid_factory_params):
-        """Test that _format_image includes 'data:image/jpeg;base64,' prefix."""
-        pass
+    # REDUNDANT: Data URL format test covers the prefix requirement
+    # def test_format_image_includes_base64_prefix(self, valid_factory_params):
+    #     """Test that _format_image includes 'data:image/jpeg;base64,' prefix."""
+    #     pass
 
-    def test_format_image_logs_debug_messages(self, valid_factory_params):
-        """Test that _format_image logs appropriate debug messages."""
-        pass
+    # UNNECESSARY: Testing logging is implementation detail
+    # def test_format_image_logs_debug_messages(self, valid_factory_params):
+    #     """Test that _format_image logs appropriate debug messages."""
+    #     pass
 
     def test_format_image_file_not_found_raises_value_error(self, valid_factory_params):
         """Test that _format_image raises ValueError when file doesn't exist."""
         pass
 
-    def test_format_image_permission_denied_raises_value_error(self, valid_factory_params):
-        """Test that _format_image raises ValueError when file access is denied."""
-        pass
+    # REDUNDANT: File not found test covers most file access issues
+    # def test_format_image_permission_denied_raises_value_error(self, valid_factory_params):
+    #     """Test that _format_image raises ValueError when file access is denied."""
+    #     pass
 
     def test_format_image_empty_file_handles_gracefully(self, valid_factory_params):
         """Test that _format_image handles empty image files gracefully."""
         pass
 
-    def test_format_image_logs_error_on_failure(self, valid_factory_params):
-        """Test that _format_image logs error message when encoding fails."""
-        pass
+    # UNNECESSARY: Testing logging is implementation detail
+    # def test_format_image_logs_error_on_failure(self, valid_factory_params):
+    #     """Test that _format_image logs error message when encoding fails."""
+    #     pass
 
     def test_format_image_with_none_path_fails(self, valid_factory_params):
         """Test that _format_image fails when image path is None."""
@@ -232,21 +252,24 @@ class TestFormatImageMethod:
         """Test that _format_image fails when image path is empty string."""
         pass
 
-    def test_format_image_opens_file_in_binary_mode(self, valid_factory_params):
-        """Test that _format_image opens files in binary read mode."""
-        pass
+    # UNNECESSARY: Testing implementation details of file operations
+    # def test_format_image_opens_file_in_binary_mode(self, valid_factory_params):
+    #     """Test that _format_image opens files in binary read mode."""
+    #     pass
 
     def test_format_image_base64_encoding_correctness(self, valid_factory_params):
         """Test that _format_image produces correct base64 encoding."""
         pass
 
-    def test_format_image_different_file_types(self, valid_factory_params):
-        """Test that _format_image handles different image file types (jpg, png, etc.)."""
-        pass
+    # REDUNDANT: Valid file success test should cover different formats
+    # def test_format_image_different_file_types(self, valid_factory_params):
+    #     """Test that _format_image handles different image file types (jpg, png, etc.)."""
+    #     pass
 
-    def test_format_image_large_file_handling(self, valid_factory_params):
-        """Test that _format_image handles large image files appropriately."""
-        pass
+    # UNNECESSARY: Performance testing not needed for unit tests
+    # def test_format_image_large_file_handling(self, valid_factory_params):
+    #     """Test that _format_image handles large image files appropriately."""
+    #     pass
 
 
 class TestQuestionToDictMethod:
@@ -256,21 +279,22 @@ class TestQuestionToDictMethod:
         """Test that _question_to_dict returns dictionary with expected keys."""
         pass
 
-    def test_question_to_dict_includes_chapter_key(self, valid_factory_params, sample_question_text_only):
-        """Test that _question_to_dict includes '章节' key in returned dictionary."""
-        pass
+    # REDUNDANT: Structure test covers all required keys
+    # def test_question_to_dict_includes_chapter_key(self, valid_factory_params, sample_question_text_only):
+    #     """Test that _question_to_dict includes '章节' key in returned dictionary."""
+    #     pass
 
-    def test_question_to_dict_includes_question_key(self, valid_factory_params, sample_question_text_only):
-        """Test that _question_to_dict includes '题目' key in returned dictionary."""
-        pass
+    # def test_question_to_dict_includes_question_key(self, valid_factory_params, sample_question_text_only):
+    #     """Test that _question_to_dict includes '题目' key in returned dictionary."""
+    #     pass
 
-    def test_question_to_dict_includes_options_key(self, valid_factory_params, sample_question_text_only):
-        """Test that _question_to_dict includes '选项' key in returned dictionary."""
-        pass
+    # def test_question_to_dict_includes_options_key(self, valid_factory_params, sample_question_text_only):
+    #     """Test that _question_to_dict includes '选项' key in returned dictionary."""
+    #     pass
 
-    def test_question_to_dict_includes_answer_key(self, valid_factory_params, sample_question_text_only):
-        """Test that _question_to_dict includes '答案' key in returned dictionary."""
-        pass
+    # def test_question_to_dict_includes_answer_key(self, valid_factory_params, sample_question_text_only):
+    #     """Test that _question_to_dict includes '答案' key in returned dictionary."""
+    #     pass
 
     def test_question_to_dict_chapter_format_correct(self, valid_factory_params, sample_question_text_only):
         """Test that _question_to_dict formats chapter as 'number: name'."""
@@ -288,13 +312,15 @@ class TestQuestionToDictMethod:
         """Test that _question_to_dict preserves correct answer text."""
         pass
 
-    def test_question_to_dict_logs_debug_messages(self, valid_factory_params, sample_question_text_only):
-        """Test that _question_to_dict logs appropriate debug messages."""
-        pass
+    # UNNECESSARY: Testing logging is implementation detail
+    # def test_question_to_dict_logs_debug_messages(self, valid_factory_params, sample_question_text_only):
+    #     """Test that _question_to_dict logs appropriate debug messages."""
+    #     pass
 
-    def test_question_to_dict_calls_assign_letter_codes(self, valid_factory_params, sample_question_text_only):
-        """Test that _question_to_dict calls _assign_letter_codes method."""
-        pass
+    # UNNECESSARY: Testing internal method calls is implementation detail
+    # def test_question_to_dict_calls_assign_letter_codes(self, valid_factory_params, sample_question_text_only):
+    #     """Test that _question_to_dict calls _assign_letter_codes method."""
+    #     pass
 
     def test_question_to_dict_with_none_question_fails(self, valid_factory_params):
         """Test that _question_to_dict fails when question parameter is None."""
@@ -304,25 +330,28 @@ class TestQuestionToDictMethod:
         """Test that _question_to_dict handles exceptions and logs errors appropriately."""
         pass
 
-    def test_question_to_dict_logs_error_on_failure(self, valid_factory_params):
-        """Test that _question_to_dict logs error message when conversion fails."""
-        pass
+    # UNNECESSARY: Testing logging is implementation detail
+    # def test_question_to_dict_logs_error_on_failure(self, valid_factory_params):
+    #     """Test that _question_to_dict logs error message when conversion fails."""
+    #     pass
 
-    def test_question_to_dict_raises_value_error_on_failure(self, valid_factory_params):
-        """Test that _question_to_dict raises ValueError when conversion fails."""
-        pass
+    # REDUNDANT: Exception handling test covers error raising behavior
+    # def test_question_to_dict_raises_value_error_on_failure(self, valid_factory_params):
+    #     """Test that _question_to_dict raises ValueError when conversion fails."""
+    #     pass
 
     def test_question_to_dict_unicode_chapter_handling(self, valid_factory_params):
         """Test that _question_to_dict correctly handles unicode characters in chapter names."""
         pass
 
-    def test_question_to_dict_unicode_question_handling(self, valid_factory_params):
-        """Test that _question_to_dict correctly handles unicode characters in question text."""
-        pass
+    # REDUNDANT: One unicode test should cover all text fields
+    # def test_question_to_dict_unicode_question_handling(self, valid_factory_params):
+    #     """Test that _question_to_dict correctly handles unicode characters in question text."""
+    #     pass
 
-    def test_question_to_dict_unicode_answer_handling(self, valid_factory_params):
-        """Test that _question_to_dict correctly handles unicode characters in answers."""
-        pass
+    # def test_question_to_dict_unicode_answer_handling(self, valid_factory_params):
+    #     """Test that _question_to_dict correctly handles unicode characters in answers."""
+    #     pass
 
 
 class TestAssignLetterCodesMethod:
@@ -348,21 +377,23 @@ class TestAssignLetterCodesMethod:
         """Test that _assign_letter_codes sorts answers alphabetically before assigning letters."""
         pass
 
-    def test_assign_letter_codes_logs_debug_message(self, valid_factory_params):
-        """Test that _assign_letter_codes logs appropriate debug message."""
-        pass
+    # UNNECESSARY: Testing logging is implementation detail
+    # def test_assign_letter_codes_logs_debug_message(self, valid_factory_params):
+    #     """Test that _assign_letter_codes logs appropriate debug message."""
+    #     pass
 
     def test_assign_letter_codes_two_answers(self, valid_factory_params):
         """Test that _assign_letter_codes handles exactly two answer choices correctly."""
         pass
 
-    def test_assign_letter_codes_three_answers(self, valid_factory_params):
-        """Test that _assign_letter_codes handles three answer choices correctly."""
-        pass
+    # REDUNDANT: Two answers test covers the basic functionality - don't need separate tests for each count
+    # def test_assign_letter_codes_three_answers(self, valid_factory_params):
+    #     """Test that _assign_letter_codes handles three answer choices correctly."""
+    #     pass
 
-    def test_assign_letter_codes_four_answers(self, valid_factory_params):
-        """Test that _assign_letter_codes handles four answer choices correctly."""
-        pass
+    # def test_assign_letter_codes_four_answers(self, valid_factory_params):
+    #     """Test that _assign_letter_codes handles four answer choices correctly."""
+    #     pass
 
     def test_assign_letter_codes_many_answers(self, valid_factory_params):
         """Test that _assign_letter_codes handles many answer choices (up to Z)."""
@@ -376,21 +407,24 @@ class TestAssignLetterCodesMethod:
         """Test that _assign_letter_codes fails when answer_choices parameter is None."""
         pass
 
-    def test_assign_letter_codes_duplicate_answers_handled(self, valid_factory_params):
-        """Test that _assign_letter_codes handles duplicate answers in the set correctly."""
-        pass
+    # UNNECESSARY: Sets don't have duplicates by definition
+    # def test_assign_letter_codes_duplicate_answers_handled(self, valid_factory_params):
+    #     """Test that _assign_letter_codes handles duplicate answers in the set correctly."""
+    #     pass
 
     def test_assign_letter_codes_unicode_answers(self, valid_factory_params):
         """Test that _assign_letter_codes correctly handles unicode characters in answers."""
         pass
 
-    def test_assign_letter_codes_special_character_answers(self, valid_factory_params):
-        """Test that _assign_letter_codes correctly handles special characters in answers."""
-        pass
+    # REDUNDANT: Unicode test should cover special characters
+    # def test_assign_letter_codes_special_character_answers(self, valid_factory_params):
+    #     """Test that _assign_letter_codes correctly handles special characters in answers."""
+    #     pass
 
-    def test_assign_letter_codes_very_long_answers(self, valid_factory_params):
-        """Test that _assign_letter_codes handles very long answer text correctly."""
-        pass
+    # UNNECESSARY: Length of answer text shouldn't affect letter assignment
+    # def test_assign_letter_codes_very_long_answers(self, valid_factory_params):
+    #     """Test that _assign_letter_codes handles very long answer text correctly."""
+    #     pass
 
     def test_assign_letter_codes_case_sensitive_sorting(self, valid_factory_params):
         """Test that _assign_letter_codes sorts answers in case-sensitive manner."""
@@ -412,29 +446,33 @@ class TestRequestFactoryIntegration:
         """Test that the same factory can generate multiple requests correctly."""
         pass
 
-    def test_request_factory_with_different_models(self, mock_logger):
-        """Test RequestFactory behavior with different model configurations."""
-        pass
+    # REDUNDANT: Different configurations should be tested in BasicLabelingRequest tests
+    # def test_request_factory_with_different_models(self, mock_logger):
+    #     """Test RequestFactory behavior with different model configurations."""
+    #     pass
 
-    def test_request_factory_with_different_urls(self, mock_logger):
-        """Test RequestFactory behavior with different URL configurations."""
-        pass
+    # def test_request_factory_with_different_urls(self, mock_logger):
+    #     """Test RequestFactory behavior with different URL configurations."""
+    #     pass
 
-    def test_concurrent_request_creation(self, valid_factory_params):
-        """Test that RequestFactory can handle concurrent request creation safely."""
-        pass
+    # UNNECESSARY: Concurrency testing not needed for this simple factory class
+    # def test_concurrent_request_creation(self, valid_factory_params):
+    #     """Test that RequestFactory can handle concurrent request creation safely."""
+    #     pass
 
-    def test_memory_usage_with_large_images(self, valid_factory_params):
-        """Test memory usage behavior when processing questions with large images."""
-        pass
+    # UNNECESSARY: Memory testing not appropriate for unit tests
+    # def test_memory_usage_with_large_images(self, valid_factory_params):
+    #     """Test memory usage behavior when processing questions with large images."""
+    #     pass
 
     def test_error_propagation_through_workflow(self, valid_factory_params):
         """Test that errors are properly propagated through the complete workflow."""
         pass
 
-    def test_logging_consistency_across_methods(self, valid_factory_params):
-        """Test that logging behavior is consistent across all factory methods."""
-        pass
+    # UNNECESSARY: Testing logging consistency is implementation detail
+    # def test_logging_consistency_across_methods(self, valid_factory_params):
+    #     """Test that logging behavior is consistent across all factory methods."""
+    #     pass
 
 
 class TestRequestFactoryEdgeCases:
@@ -444,13 +482,14 @@ class TestRequestFactoryEdgeCases:
         """Test handling of questions with None or invalid chapter information."""
         pass
 
-    def test_question_with_empty_answer_set(self, valid_factory_params):
-        """Test handling of questions with empty answer set."""
-        pass
+    # REDUNDANT: Question validation should be tested in Question class tests
+    # def test_question_with_empty_answer_set(self, valid_factory_params):
+    #     """Test handling of questions with empty answer set."""
+    #     pass
 
-    def test_question_with_single_answer(self, valid_factory_params):
-        """Test handling of questions with only one answer choice."""
-        pass
+    # def test_question_with_single_answer(self, valid_factory_params):
+    #     """Test handling of questions with only one answer choice."""
+    #     pass
 
     def test_question_with_maximum_answer_choices(self, valid_factory_params):
         """Test handling of questions with maximum possible answer choices (26+)."""
@@ -460,21 +499,24 @@ class TestRequestFactoryEdgeCases:
         """Test handling of image paths containing special characters."""
         pass
 
-    def test_image_path_with_unicode_characters(self, valid_factory_params):
-        """Test handling of image paths containing unicode characters."""
-        pass
+    # REDUNDANT: Special characters test should cover unicode
+    # def test_image_path_with_unicode_characters(self, valid_factory_params):
+    #     """Test handling of image paths containing unicode characters."""
+    #     pass
 
-    def test_very_long_question_text(self, valid_factory_params):
-        """Test handling of questions with extremely long question text."""
-        pass
+    # UNNECESSARY: Text length limits should be tested in Question class
+    # def test_very_long_question_text(self, valid_factory_params):
+    #     """Test handling of questions with extremely long question text."""
+    #     pass
 
-    def test_very_long_answer_choices(self, valid_factory_params):
-        """Test handling of questions with extremely long answer choice text."""
-        pass
+    # def test_very_long_answer_choices(self, valid_factory_params):
+    #     """Test handling of questions with extremely long answer choice text."""
+    #     pass
 
-    def test_question_with_all_empty_strings(self, valid_factory_params):
-        """Test handling of malformed questions with empty string fields."""
-        pass
+    # REDUNDANT: Question validation is handled by Question class
+    # def test_question_with_all_empty_strings(self, valid_factory_params):
+    #     """Test handling of malformed questions with empty string fields."""
+    #     pass
 
     def test_factory_reuse_after_errors(self, valid_factory_params):
         """Test that factory can be reused successfully after encountering errors."""
@@ -488,38 +530,45 @@ class TestRequestFactoryErrorHandling:
         """Test handling of file system errors during image encoding."""
         pass
 
-    def test_memory_errors_during_image_processing(self, valid_factory_params):
-        """Test handling of memory errors when processing large images."""
-        pass
+    # UNNECESSARY: Memory testing not appropriate for unit tests
+    # def test_memory_errors_during_image_processing(self, valid_factory_params):
+    #     """Test handling of memory errors when processing large images."""
+    #     pass
 
     def test_corrupted_image_file_handling(self, valid_factory_params):
         """Test handling of corrupted or invalid image files."""
         pass
 
-    def test_permission_denied_image_file(self, valid_factory_params):
-        """Test handling of image files with denied read permissions."""
-        pass
+    # REDUNDANT: File system errors test covers permission issues
+    # def test_permission_denied_image_file(self, valid_factory_params):
+    #     """Test handling of image files with denied read permissions."""
+    #     pass
 
-    def test_network_path_image_file(self, valid_factory_params):
-        """Test handling of image files on network paths or remote locations."""
-        pass
+    # UNNECESSARY: Network path testing is environment-specific and complex
+    # def test_network_path_image_file(self, valid_factory_params):
+    #     """Test handling of image files on network paths or remote locations."""
+    #     pass
 
-    def test_question_object_missing_required_methods(self, valid_factory_params):
-        """Test handling of malformed Question objects missing required methods."""
-        pass
+    # UNNECESSARY: Question object validation should be tested in Question class tests
+    # def test_question_object_missing_required_methods(self, valid_factory_params):
+    #     """Test handling of malformed Question objects missing required methods."""
+    #     pass
 
-    def test_question_object_methods_raising_exceptions(self, valid_factory_params):
-        """Test handling of Question objects whose methods raise exceptions."""
-        pass
+    # def test_question_object_methods_raising_exceptions(self, valid_factory_params):
+    #     """Test handling of Question objects whose methods raise exceptions."""
+    #     pass
 
-    def test_logger_failure_handling(self, valid_factory_params):
-        """Test factory behavior when logger raises exceptions."""
-        pass
+    # UNNECESSARY: Logger failure is external dependency issue, not factory responsibility
+    # def test_logger_failure_handling(self, valid_factory_params):
+    #     """Test factory behavior when logger raises exceptions."""
+    #     pass
 
-    def test_labeling_request_creation_failure(self, valid_factory_params):
-        """Test handling of failures during BasicLabelingRequest object creation."""
-        pass
+    # REDUNDANT: BasicLabelingRequest validation should be tested in its own test suite
+    # def test_labeling_request_creation_failure(self, valid_factory_params):
+    #     """Test handling of failures during BasicLabelingRequest object creation."""
+    #     pass
 
-    def test_graceful_degradation_on_partial_failures(self, valid_factory_params):
-        """Test factory behavior during partial system failures."""
-        pass
+    # UNNECESSARY: Partial failure scenarios are too complex and environment-dependent for unit tests
+    # def test_graceful_degradation_on_partial_failures(self, valid_factory_params):
+    #     """Test factory behavior during partial system failures."""
+    #     pass
