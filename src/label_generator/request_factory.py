@@ -23,7 +23,9 @@ class RequestFactory:
         self._prompt = prompt
         self._logger = logger
 
-    def make_request(self, question: Question, custom_id: str) -> LabelingRequest:
+    def make_request(self,
+                     question: Question,
+                     custom_id: str) -> LabelingRequest:
         """
         Creates a labeling request for a given question.
         """
