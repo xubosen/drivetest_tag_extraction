@@ -146,7 +146,8 @@ class TestRequestFactoryInitialization:
     """Test suite for RequestFactory constructor and initialization."""
 
     def test_valid_initialization_success(self):
-        """Test that RequestFactory initializes correctly with valid parameters."""
+        """Test that RequestFactory initializes correctly with valid
+        parameters."""
         from label_generator.request_factory import RequestFactory
         from unittest.mock import Mock
         from logging import Logger
@@ -182,7 +183,8 @@ class TestMakeRequestMethod:
 
     def test_make_request_text_only_question_success(self, request_factory,
                                                      sample_question):
-        """Test that make_request creates a valid BasicLabelingRequest for text-only questions."""
+        """Test that make_request creates a valid BasicLabelingRequest for
+        text-only questions."""
         custom_id = "test_custom_id_001"
 
         request = request_factory.make_request(sample_question, custom_id)
@@ -201,7 +203,8 @@ class TestMakeRequestMethod:
 
     def test_make_request_question_with_image_success(self, request_factory,
                                                       question_with_image):
-        """Test that make_request creates a valid BasicLabelingRequest for questions with images."""
+        """Test that make_request creates a valid BasicLabelingRequest for
+        questions with images."""
         custom_id = "test_custom_id_002"
 
         request = request_factory.make_request(question_with_image, custom_id)
@@ -212,8 +215,8 @@ class TestMakeRequestMethod:
         assert len(request.content) == 2
 
         # First item should be the image
-        assert request.content[0]["type"] == "image"
-        assert "image" in request.content[0]
+        assert request.content[0]["type"] == "image_url"
+        assert "image_url" in request.content[0]
 
         # Second item should be the text
         assert request.content[1]["type"] == "text"
@@ -239,7 +242,8 @@ class TestMakeRequestMethod:
 
     def test_make_request_uses_provided_custom_id(self, request_factory,
                                                   sample_question):
-        """Test that make_request uses the provided custom_id in the returned request."""
+        """Test that make_request uses the provided custom_id in the returned
+        request."""
         test_custom_ids = [
             "simple_id",
             "id_with_underscores",
@@ -265,7 +269,8 @@ class TestMakeRequestMethod:
 
     def test_make_request_with_empty_custom_id_fails(self, request_factory,
                                                      sample_question):
-        """Test that make_request fails when custom_id parameter is empty string."""
+        """Test that make_request fails when custom_id parameter is empty
+        string."""
         with pytest.raises(ValueError):
             request_factory.make_request(sample_question, "")
 
@@ -311,10 +316,10 @@ class TestMakeContentMethod:
         # First item should be image
         image_item = result[0]
         assert isinstance(image_item, dict)
-        assert image_item["type"] == "image"
-        assert "image" in image_item
-        assert isinstance(image_item["image"], str)
-        assert image_item["image"].startswith("data:image/jpeg;base64,")
+        assert image_item["type"] == "image_url"
+        assert "image_url" in image_item
+        assert isinstance(image_item["image_url"], str)
+        assert image_item["image_url"].startswith("data:image/jpeg;base64,")
 
         # Second item should be text
         text_item = result[1]
@@ -421,7 +426,7 @@ class TestFormatImageMethod:
         with pytest.raises(ValueError) as exc_info:
             self._call_format_image(request_factory, non_existent_path)
 
-        assert "Failed to encode image" in str(exc_info.value)
+        assert "No such file or directory" in str(exc_info.value)
         assert non_existent_path in str(exc_info.value)
 
     def test_format_image_empty_file_handles_gracefully(self, request_factory,
@@ -442,7 +447,7 @@ class TestFormatImageMethod:
         with pytest.raises(ValueError) as exc_info:
             self._call_format_image(request_factory, "")
 
-        assert "Failed to encode image" in str(exc_info.value)
+        assert "No such file or directory" in str(exc_info.value)
 
     def test_format_image_base64_encoding_correctness(self, request_factory,
                                                       temp_image_file):

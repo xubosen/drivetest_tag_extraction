@@ -47,8 +47,9 @@ class RequestFactory:
         if question.has_img():
             self._logger.debug(f"Processing question with image: "
                                f"{question.get_img_path()}")
-            output = [{"type": "image",
-                       "image": self._format_image(question.get_img_path())},
+            output = [{"type": "image_url",
+                       "image_url":
+                           self._format_image(question.get_img_path())},
                       {"type": "text",
                        "text": self._format_text(question)}]
         else:
