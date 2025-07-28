@@ -17,9 +17,9 @@
             "qid": "q1",
             "question": "What is 2 + 2?",
             "answers": [
+                "2",
                 "4",
                 "5",
-                "2",
                 "3"
             ],
             "correct_answer": "4",
@@ -32,10 +32,10 @@
             "qid": "q2",
             "question": "What is the capital of France?",
             "answers": [
-                "Paris",
                 "Berlin",
-                "Madrid",
-                "London"
+                "London",
+                "Paris",
+                "Madrid"
             ],
             "correct_answer": "Paris",
             "img_path": "test_db/raw_db/images/q2.webp",
@@ -47,10 +47,10 @@
             "qid": "q3",
             "question": "Explain photosynthesis.",
             "answers": [
-                "Water cycle",
-                "Animal breathing",
+                "Process by which plants make food",
                 "Soil formation",
-                "Process by which plants make food"
+                "Water cycle",
+                "Animal breathing"
             ],
             "correct_answer": "Process by which plants make food",
             "img_path": "",
