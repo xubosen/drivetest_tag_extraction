@@ -29,13 +29,12 @@ class ResponseParsingPipeline:
         Parse the results from the loaded JSON data into a list of Response
         objects.
         """
-        with open(self._result_path, 'r') as file:
-            json_data = json.load(file)
-
         response_lst = []
-        for line in json_data:
-            response = ResponseFactory.create_response(line)
-            response_lst.append(response)
+        with open(self._result_path, 'r') as file:
+            for line in file:
+                json_response = json.loads(line)
+                response = ResponseFactory.create_response(json_response)
+                response_lst.append(response)
         return response_lst
 
     @staticmethod

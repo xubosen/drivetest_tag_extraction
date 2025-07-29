@@ -11,7 +11,7 @@ from label_generator.response_object import (Response,
 class ResponseFactory:
 
     @staticmethod
-    def create_response(response_json: Dict[Any]) -> Response:
+    def create_response(response_json: Dict[str, Any]) -> Response:
         """
         Create a Response object from a JSON-style dictionary.
 
@@ -61,13 +61,13 @@ class ResponseFactory:
             request_id=response_json['response']['request_id'],
             response_body=body)
 
-        response = Response(response_id=response_json['response']['id'],
-                            custom_id=response_json['response']['custom_id'],
+        response = Response(response_id=response_json['id'],
+                            custom_id=response_json['custom_id'],
                             response_data=response_data)
         return response
 
     @staticmethod
-    def batch_create_response(response_json_list: List[Dict[Any]]) -> (
+    def batch_create_response(response_json_list: List[Dict[str, Any]]) -> (
             Dict)[str, Response]:
         """
         Create a batch of Response objects from a list of JSON-style
