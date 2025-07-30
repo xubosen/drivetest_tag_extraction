@@ -62,6 +62,7 @@ def cleanup_test_file(file_path: str) -> None:
             os.remove(file_path)
     except (OSError, PermissionError):
         pass  # Ignore cleanup errors in tests
+    # TODO: Consider logging cleanup errors for debugging purposes
 
 
 def create_sample_labeling_request(custom_id: str = VALID_CUSTOM_ID_1, **overrides) -> BasicLabelingRequest:
@@ -134,7 +135,7 @@ def mixed_content_requests():
             url=VALID_URL,
             model=VALID_MODEL,
             prompt=VALID_PROMPT,
-            content=[{"type": "image", "image": "http://example.com/image.jpg"}]
+            content=[{"type": "image_url", "image_url": "http://example.com/image.jpg"}]
         ),
         BasicLabelingRequest(
             custom_id="mixed_content_001",
@@ -143,7 +144,7 @@ def mixed_content_requests():
             prompt=VALID_PROMPT,
             content=[
                 {"type": "text", "text": "Analyze this image"},
-                {"type": "image", "image": "http://example.com/image2.jpg"}
+                {"type": "image_url", "image_url": "http://example.com/image2.jpg"}
             ]
         )
     ]
@@ -235,15 +236,15 @@ class TestLabelingBatchRequestCreation:
         # Verify image-only content
         image_request = batch_request.requests[1]
         assert image_request.custom_id == "image_only_001"
-        assert image_request.content[0]["type"] == "image"
-        assert "image" in image_request.content[0]
+        assert image_request.content[0]["type"] == "image_url"
+        assert "image_url" in image_request.content[0]
 
         # Verify mixed content
         mixed_request = batch_request.requests[2]
         assert mixed_request.custom_id == "mixed_content_001"
         assert len(mixed_request.content) == 2
         assert mixed_request.content[0]["type"] == "text"
-        assert mixed_request.content[1]["type"] == "image"
+        assert mixed_request.content[1]["type"] == "image_url"
 
     def test_batch_request_validation_with_invalid_request_type(self):
         """Test that validation fails when non-BasicLabelingRequest objects are added to requests."""
@@ -589,11 +590,11 @@ class TestToBatchJsonlMethod:
 
             # Verify content types are preserved
             for content_item in user_content:
-                assert content_item["type"] in ["text", "image"]
+                assert content_item["type"] in ["text", "image_url"]
                 if content_item["type"] == "text":
                     assert "text" in content_item
-                elif content_item["type"] == "image":
-                    assert "image" in content_item
+                elif content_item["type"] == "image_url":
+                    assert "image_url" in content_item
 
 
 class TestToJsonlFileMethod:

@@ -65,10 +65,9 @@ class BasicLabelingRequest(BaseModel, LabelingRequest):
             if message["type"] not in {"text", "image_url"}:
                 raise ValueError("Content type must be either 'text' or "
                                  "'image_url'")
-            if message["type"] not in ["text", "image_url"]:
+            if message["type"] not in message.keys():
                 raise ValueError(f"Content item of type '{message['type']}' "
-                                 f"must have a corresponding key in"
-                                 f" {['text', 'image_url']}")
+                                 f"must have a corresponding content key")
         return content
 
     @model_validator(mode='after')

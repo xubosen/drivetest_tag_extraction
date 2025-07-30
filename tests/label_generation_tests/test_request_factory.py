@@ -264,7 +264,7 @@ class TestMakeRequestMethod:
     def test_make_request_with_none_custom_id_fails(self, request_factory,
                                                     sample_question):
         """Test that make_request fails when custom_id parameter is None."""
-        with pytest.raises((TypeError, ValueError)):
+        with pytest.raises(ValueError):
             request_factory.make_request(sample_question, None)
 
     def test_make_request_with_empty_custom_id_fails(self, request_factory,
@@ -313,7 +313,7 @@ class TestMakeContentMethod:
         assert isinstance(result, list)
         assert len(result) == 2
 
-        # First item should be image
+        # First item should be an image
         image_item = result[0]
         assert isinstance(image_item, dict)
         assert image_item["type"] == "image_url"
@@ -434,12 +434,13 @@ class TestFormatImageMethod:
         """Test that _format_image handles empty image files gracefully."""
         result = self._call_format_image(request_factory, temp_empty_file)
 
-        # Should still return a valid data URL format, just with empty base64 content
+        # Should still return a valid data URL format, just with empty base64
+        # content
         assert result == "data:image/jpeg;base64,"
 
     def test_format_image_with_none_path_fails(self, request_factory):
         """Test that _format_image fails when image path is None."""
-        with pytest.raises((TypeError, ValueError)):
+        with pytest.raises(ValueError):
             self._call_format_image(request_factory, None)
 
     def test_format_image_with_empty_path_fails(self, request_factory):
@@ -469,22 +470,28 @@ class TestFormatImageMethod:
 
 class TestRequestFactoryIntegration:
     """Test suite for integration scenarios and end-to-end workflows."""
+    # TODO: Implement integration tests for the complete workflow
 
     def test_full_workflow_text_only_question(self):
-        """Test complete workflow from factory creation to request generation for text-only questions."""
+        """Test complete workflow from factory creation to request generation
+        for text-only questions."""
 
     def test_full_workflow_question_with_image(self):
-        """Test complete workflow from factory creation to request generation for questions with images."""
+        """Test complete workflow from factory creation to request generation
+        for questions with images."""
 
     def test_multiple_requests_same_factory(self):
-        """Test that the same factory can generate multiple requests correctly."""
-
-    def test_error_propagation_through_workflow(self):
-        """Test that errors are properly propagated through the complete workflow."""
+        """Test that the same factory can generate multiple requests
+        correctly."""
 
 
 class TestRequestFactoryErrorHandling:
     """Test suite for error handling and exception scenarios."""
+    # TODO: Implement error handling tests
+
+    def test_error_propagation_through_workflow(self):
+        """Test that errors are properly propagated through the complete
+        workflow."""
 
     def test_file_system_errors_during_image_processing(self):
         """Test handling of file system errors during image encoding."""

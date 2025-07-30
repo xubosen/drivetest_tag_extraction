@@ -214,10 +214,10 @@ class TestContentValidation:
             url=VALID_URL,
             model=VALID_MODEL,
             prompt=VALID_PROMPT,
-            content=[{"type": "image", "image": "http://example.com/image.png"}]
+            content=[{"type": "image_url", "image_url": "http://example.com/image.png"}]
         )
         assert request.content == [
-            {"type": "image", "image": "http://example.com/image.png"}]
+            {"type": "image_url", "image_url": "http://example.com/image.png"}]
 
     def test_valid_mixed_content_text_and_image(self):
         """Test that valid mixed text and image content is accepted."""
@@ -228,12 +228,12 @@ class TestContentValidation:
             prompt=VALID_PROMPT,
             content=[
                 {"type": "text", "text": "Text item"},
-                {"type": "image", "image": "http://example.com/image.png"}
+                {"type": "image_url", "image_url": "http://example.com/image.png"}
             ]
         )
         assert request.content == [
             {"type": "text", "text": "Text item"},
-            {"type": "image", "image": "http://example.com/image.png"}
+            {"type": "image_url", "image_url": "http://example.com/image.png"}
         ]
 
     def test_content_item_without_type_key_raises_value_error(self):
@@ -283,20 +283,20 @@ class TestContentValidation:
                 url=VALID_URL,
                 model=VALID_MODEL,
                 prompt=VALID_PROMPT,
-                content=[{"type": "text", "image": "image_url"}]
+                content=[{"type": "text", "image_url": "image_url"}]
             )
 
         assert "text" in str(exc_info.value)
 
     def test_image_content_without_image_key_raises_value_error(self):
-        """Test that image content without 'image' key raises ValueError."""
-        with pytest.raises(ValidationError) as exc_info:
+        """Test that image content without 'image_url' key raises ValueError."""
+        with pytest.raises(ValueError) as exc_info:
             BasicLabelingRequest(
                 custom_id=VALID_CUSTOM_ID,
                 url=VALID_URL,
                 model=VALID_MODEL,
                 prompt=VALID_PROMPT,
-                content=[{"type": "image", "text": "Some text"}]
+                content=[{"type": "image_url", "text": "Some text"}]
             )
 
         assert "image" in str(exc_info.value)
@@ -601,7 +601,7 @@ class TestLabelingRequestIntegration:
                       "content moderation.",
             "content": [
                 {"type": "text", "text": "Please analyze this image"},
-                {"type": "image", "image": "https://example.com/test_image.jpg"}
+                {"type": "image_url", "image_url": "https://example.com/test_image.jpg"}
             ]
         }
 
