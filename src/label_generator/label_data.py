@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import List
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class LabelData(BaseModel):
@@ -9,21 +9,35 @@ class LabelData(BaseModel):
     """
     model_config = ConfigDict(validate_assignment=True,
                               extra='forbid')
-    keywords: List[str] = Field(default_factory=list, min_length=1,
+    keywords: List[str] = Field(default_factory=list,
                                 description="List of keywords extracted from"
                                             " the response")
-    tags: List[str] = Field(default_factory=list, min_length=1,
+    tags: List[str] = Field(default_factory=list,
                             description="List of tags extracted from the "
                                         "response")
 
-    def __init__(self, tags: List[str] = None, keywords: List[str] = None):
+    @field_validator('tags', 'keywords', mode='after')
+    @classmethod
+    def validate_unique_strings(cls, v: List[str]) -> List[str]:
+        """
+        Ensure that the tags and keywords are unique strings.
+        """
+        if not isinstance(v, list):
+            raise ValueError("Must be a list")
+        if not all(isinstance(item, str) for item in v):
+            raise ValueError("All items must be strings")
+        if len(set(v)) != len(v):
+            v = list(set(v))  # Remove duplicates
+        return v
+
+    def __init__(self, tags=None, keywords=None):
         """
         Initialize the LabelData with optional tags and keywords.
         """
-        if tags is not None:
-            tags = list(set(tags))
-        if keywords is not None:
-            keywords = list(set(keywords))
+        if keywords is None:
+            keywords = []
+        if tags is None:
+            tags = []
         super().__init__(tags=tags, keywords=keywords)
 
     def add_tags(self, tags: List[str]):
