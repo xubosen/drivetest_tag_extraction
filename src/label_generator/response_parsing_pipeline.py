@@ -4,17 +4,20 @@ from typing import Dict, List
 from entities.question_bank import QuestionBank
 from label_generator.response_object import Response
 from label_generator.response_factory import ResponseFactory
-from label_generator.label_factory import LabelFactory
+from label_generator.label_factory import LabelFactory, MessageFormatConfig
 from label_generator.label_data import LabelData
 
 
 class ResponseParsingPipeline:
     _qb: QuestionBank
     _result_path: str
+    _msg_format: MessageFormatConfig
 
-    def __init__(self, question_bank: QuestionBank, result_path: str):
+    def __init__(self, question_bank: QuestionBank, result_path: str,
+                 message_format: MessageFormatConfig):
         self._qb = question_bank
         self._result_path = result_path
+        self._msg_format = message_format
 
     def parse_and_load(self):
         """
@@ -37,8 +40,8 @@ class ResponseParsingPipeline:
                 response_lst.append(response)
         return response_lst
 
-    @staticmethod
-    def _response_to_labels(response_lst: List[Response]) -> Dict[str, LabelData]:
+    def _response_to_labels(self, response_lst: List[Response]) \
+            -> Dict[str, LabelData]:
         """
         Convert a list of Response objects into a dictionary of labels.
         """
@@ -48,7 +51,9 @@ class ResponseParsingPipeline:
             choices = response.response_data.response_body.choices
             for choice in choices:
                 message = choice.message
-                label_data = LabelFactory.make_label_data(message)
+                label_factory = LabelFactory(
+                    message_format=self._msg_format)
+                label_data = label_factory.make_label_data(message)
                 if qid not in qid_to_labels:
                     qid_to_labels[qid] = label_data
                 else:

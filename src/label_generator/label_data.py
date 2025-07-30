@@ -27,7 +27,7 @@ class LabelData(BaseModel):
         if not all(isinstance(item, str) for item in v):
             raise ValueError("All items must be strings")
         if len(set(v)) != len(v):
-            v = list(set(v))  # Remove duplicates
+            v = list(set(v))
         return v
 
     def __init__(self, tags=None, keywords=None):
