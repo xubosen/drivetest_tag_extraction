@@ -30,8 +30,8 @@ class ResponseParsingPipeline:
         objects.
         """
         response_lst = []
-        with open(self._result_path, 'r') as file:
-            for line in file:
+        with open(self._result_path, 'r') as jsonl_file:
+            for line in jsonl_file:
                 json_response = json.loads(line)
                 response = ResponseFactory.create_response(json_response)
                 response_lst.append(response)
