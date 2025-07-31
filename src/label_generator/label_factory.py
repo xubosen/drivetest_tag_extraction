@@ -25,6 +25,7 @@ class MessageFormatConfig(BaseModel):
     def validate_tags(self):
         if self.output_start_tag == self.output_end_tag:
             raise ValueError("Start and end tags must be different.")
+        return self
 
 
 class LabelFactory:
