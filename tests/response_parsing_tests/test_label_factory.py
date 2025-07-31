@@ -466,15 +466,19 @@ class TestLabelDataCreation:
         """
         Test creation of LabelData from a valid message with proper format.
 
-        Should successfully create LabelData object with extracted keywords
+        Should successfully create a LabelData object with extracted keywords
         and tags.
         """
-        pass
+        factory = LabelFactory(message_format=MessageFormatConfig(
+            output_start_tag="<JSON>",
+            output_end_tag="</JSON>"
+        ))
 
-    def test_make_label_data_custom_format_config(self):
-        """
-        Test label data creation using custom message format configuration.
+        message = Message(role="assistant", content=SAMPLE_QUESTION)
+        label_data = factory.make_label_data(message)
 
-        Should work with non-default output tags in message format.
-        """
-        pass
+        assert isinstance(label_data, LabelData)
+        assert label_data.keywords == ["交通标志", "禁令标志", "禁止直行",
+                                       "禁止右转", "红色圆形"]
+        assert label_data.tags == ["交通信号-标志-禁令"]
+
