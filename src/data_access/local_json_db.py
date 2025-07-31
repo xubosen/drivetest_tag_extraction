@@ -93,8 +93,8 @@ class LocalJsonDB(Database):
                 "correct_answer": question.get_correct_answer(),
                 "img_path": self._make_img_path(question),
                 "chapter": chapter,
-                "tags": [],
-                "keywords": []
+                "tags": question.get_tags(),
+                "keywords": question.get_keywords()
             }
 
     def _make_img_path(self, question) -> str:
