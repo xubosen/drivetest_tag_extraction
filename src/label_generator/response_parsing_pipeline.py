@@ -64,7 +64,7 @@ class ResponseParsingPipeline:
         """
         Load the labels into the question bank.
         """
-        for qid in self._qb.get_qid_list():
+        for qid in qid_to_labels.keys():
             question = self._qb.get_question(qid)
             label_data = qid_to_labels[qid]
             question.set_tags(label_data.get_tags())
