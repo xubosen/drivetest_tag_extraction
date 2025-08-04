@@ -8,8 +8,8 @@ from src.data_access.local_json_db import LocalJsonDB
 from src.entities.question_bank import QuestionBank
 from src.entities.question import Question
 
-EMPTY_JSON_PATH = "data_access_test/empty_json.json"
-EMPTY_IMG_DIR = "data_access_test/empty_image_dir"
+EMPTY_JSON_PATH = "data_access_tests/empty_json.json"
+EMPTY_IMG_DIR = "data_access_tests/empty_image_dir"
 
 TEST_DB_FILE_PATH = "test_db/raw_db/data.json"
 TEST_DB_IMAGES = "test_db/raw_db/images"

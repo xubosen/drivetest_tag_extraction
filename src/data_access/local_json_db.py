@@ -93,8 +93,8 @@ class LocalJsonDB(Database):
                 "correct_answer": question.get_correct_answer(),
                 "img_path": self._make_img_path(question),
                 "chapter": chapter,
-                "tags": [],
-                "keywords": []
+                "tags": question.get_tags(),
+                "keywords": question.get_keywords()
             }
 
     def _make_img_path(self, question) -> str:
@@ -127,6 +127,9 @@ class LocalJsonDB(Database):
                 img_path=img_path,
                 chapter=(chapter, qb.describe_chapter(chapter))
             )
+            if "tags" in q_data.keys():
+                question.set_tags(q_data["tags"])
+                question.set_keywords(q_data["keywords"])
             qb.add_question(question, chapter)
 
     def _get_img_path(self, q_data):
